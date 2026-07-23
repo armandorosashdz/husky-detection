@@ -20,6 +20,10 @@ FIGURES_DIR = RESULTS / "figures"
 CLASS_ID   = 0
 CLASS_NAME = "husky"
 
+# ---------- Imágenes ----------
+IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
+
 # Fase 1: auto-etiquetado (modelo grande, calidad sobre velocidad)
 QWEN_LABELER = "Qwen/Qwen3.5-4B-VL"
 
