@@ -13,6 +13,7 @@ husky-detection/
 │   ├── auto_labeling.py         # Fase 1: raw/ → labels_auto/
 │   ├── train_yolo.py            # Fase 2
 │   ├── hybrid_inference.py      # Fases 3-4 (--validator 0.8b|2b)
+|   ├── rename_images.py         # Renombra las imagenes en data/raw/
 │   └── metrics.py               # mAP, FP/FN, latencia, curvas P-R
 ├── dataset.yaml
 ├── data/                        # link en README, no al repo
