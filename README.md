@@ -9,7 +9,8 @@ husky-detection/
 ├── .gitignore                   # *.pt, runs/, data/, __pycache__
 ├── config.py                    # model_ids, prompts, thresholds, rutas
 ├── src/
-│   ├── qwen_utils.py            # cargar Qwen + parsear + convertir a YOLO
+│   ├── vlm_utils.py             # cargar Qwen + parsear + convertir a YOLO
+│   ├── yolo_utils.py            # cargar YOLOv8 entrenado + detectar + recortar
 │   ├── auto_labeling.py         # Fase 1: raw/ → labels_auto/
 │   ├── train_yolo.py            # Fase 2
 │   ├── hybrid_inference.py      # Fases 3-4 (--validator 0.8b|2b)

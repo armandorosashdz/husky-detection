@@ -1,5 +1,5 @@
 """
-Renombra las imágenes de data/raw/ al esquema husky_001.jpg ... husky_100.jpg
+Renombra las imágenes de data/raw/ al esquema husky_000.jpg ... husky_099.jpg
 
 Uso:
     python src/rename_images.py

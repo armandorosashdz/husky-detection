@@ -25,24 +25,35 @@ IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
 
 # Fase 1: auto-etiquetado (modelo grande, calidad sobre velocidad)
-QWEN_LABELER = "Qwen/Qwen3.5-4B-VL"
+# Nota: Qwen3.5 es nativamente multimodal, los repos de HF NO llevan sufijo "-VL"
+# (a diferencia de Qwen2.5-VL). Verificado en huggingface.co/Qwen/Qwen3.5-4B.
+QWEN_LABELER = "Qwen/Qwen3.5-4B"
 
 # Fase 4: validadores en cascada, se eligen por flag --validator
 QWEN_VALIDATORS = {
-    "0.8b": "Qwen/Qwen3.5-0.8B-VL",
-    "2b":   "Qwen/Qwen3.5-2B-VL",
+    "0.8b": "Qwen/Qwen3.5-0.8B",
+    "2b":   "Qwen/Qwen3.5-2B",
+    "4b":  "Qwen/Qwen3.5-4B"
 }
 
 YOLO_BASE    = "yolov8s.pt"          # pesos preentrenados de Ultralytics
 YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
 
-DEVICE = "cuda"
-DTYPE  = "float16"
+# Sin GPU NVIDIA disponible en esta laptop (solo AMD integrada) -> CPU.
+# float16 no está bien soportado para generación en CPU, por eso float32.
+# Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
+DEVICE = "cpu"
+DTYPE  = "float32"
 
 # ---------- Prompts (versionados: evidencia para la pregunta 4) ----------
+# Nota: se probó pedir [ymin, xmin, ymax, xmax] explícitamente y Qwen3.5 lo ignoraba,
+# respondiendo siempre con su formato nativo "bbox_2d": [x1, y1, x2, y2]. Orden
+# confirmado visualmente en data/labels_check/test_orden_*.jpg. Por eso el prompt
+# ahora pide directamente ese formato nativo en vez de pelear contra él.
 PROMPT_LABELING = (
-    "Detect all husky dogs in this image. Return one bounding box per dog "
-    "as a JSON list of [ymin, xmin, ymax, xmax] in a 0-1000 scale. "
+    "Detect all husky dogs in this image. "
+    "Return a JSON list of objects, each with a \"bbox_2d\" key: "
+    "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
     "Return only the JSON, no explanation."
 )
 
