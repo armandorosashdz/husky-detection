@@ -104,6 +104,7 @@ def parse_boxes(response: str) -> list[list[float]]:
     if len(data) == 4 and all(isinstance(v, (int, float)) for v in data):
         data = [data]
 
+    # Acepta tanto lista de listas como lista de dicts con clave "bbox_2d" (o "bbox"/"box")
     boxes = []
     for item in data:
         box = item

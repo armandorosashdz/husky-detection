@@ -1,9 +1,9 @@
 """
-Fase 1: auto-etiquetado con Qwen VL. data/raw/ -> data/labels_auto/
+Fase 1: auto-etiquetado con Qwen VL. data/raw/ -> data/labels_auto/ (+ data/labels_check/)
 
-Por ahora solo una prueba de humo (smoke test) para validar que QwenVLM.load()
-y QwenVLM.ask() funcionan de punta a punta con una sola imagen antes de escribir
-el loop completo sobre las 100 imágenes.
+Por cada imagen en data/raw/: le pide a Qwen las cajas (PROMPT_LABELING), las
+convierte a formato YOLO y escribe un .txt en data/labels_auto/, y dibuja las
+cajas sobre la imagen para revisión manual en data/labels_check/.
 
 Uso:
     python src/auto_labeling.py
@@ -12,56 +12,75 @@ Uso:
 from pathlib import Path
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 sys.path.append(str(Path(__file__).parent.parent))
 import config
-from vlm_utils import QwenVLM, parse_boxes
+from vlm_utils import QwenVLM, convert_to_yolo, parse_boxes
 
 
 def es_imagen(path: Path) -> bool:
     return path.is_file() and path.suffix.lower() in config.IMG_EXTENSIONS
 
 
-def main():
-
-    # Se crea la lista de imágenes a procesar (solo las que tengan extensión válida).
+def listar_imagenes() -> list[Path]:
     imagenes = []
-
     for p in config.RAW_DIR.iterdir():
         if es_imagen(p):
             imagenes.append(p)
-    imagenes = sorted(imagenes)
+    return sorted(imagenes)
 
-    # Si no hay imágenes, abortar.
+
+def dibujar_cajas(image: Image.Image, cajas: list[list[float]]) -> Image.Image:
+    """Dibuja, sobre una copia de la imagen, las cajas en escala 0-1000 [x1,y1,x2,y2]."""
+    ancho, alto = image.size
+    salida = image.copy()
+    draw = ImageDraw.Draw(salida)
+    for x1, y1, x2, y2 in cajas:
+        rect = (x1 / 1000 * ancho, y1 / 1000 * alto, x2 / 1000 * ancho, y2 / 1000 * alto)
+        draw.rectangle(rect, outline="lime", width=4)
+    return salida
+
+
+def procesar_imagen(vlm: QwenVLM, imagen_path: Path) -> int:
+    """Procesa una imagen: pide las cajas a Qwen, escribe el .txt YOLO y guarda la
+    visualización con los BB dibujados. Regresa el número de cajas detectadas."""
+    image = Image.open(imagen_path).convert("RGB")
+
+    respuesta = vlm.ask(image, config.PROMPT_LABELING)
+    cajas = parse_boxes(respuesta)
+
+    lineas_yolo = [convert_to_yolo(caja) for caja in cajas]
+    txt_path = config.LABELS_AUTO_DIR / f"{imagen_path.stem}.txt"
+    txt_path.write_text("\n".join(lineas_yolo) + ("\n" if lineas_yolo else ""))
+
+    visualizacion = dibujar_cajas(image, cajas)
+    visualizacion.save(config.LABELS_CHECK_DIR / imagen_path.name)
+
+    return len(cajas)
+
+
+def main():
+    imagenes = listar_imagenes()
     if not imagenes:
         sys.exit(f"No se encontraron imágenes en {config.RAW_DIR}")
 
+    if config.AUTO_LABELING_LIMIT is not None:
+        imagenes = imagenes[:config.AUTO_LABELING_LIMIT]
 
-    # ---------- TEST ----------
-    # Se toma la primera imagen para el test.
-    imagen_prueba = imagenes[0]
-    print(f"Probando con: {imagen_prueba.name}")
+    config.LABELS_AUTO_DIR.mkdir(parents=True, exist_ok=True)
+    config.LABELS_CHECK_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Se configura el modelo Qwen a usar (0.8b, 2b o 4b).
-    modelo_prueba = config.QWEN_VALIDATORS["0.8b"]
-    print(f"Cargando modelo {modelo_prueba} en {config.DEVICE} (puede tardar)...")
+    print(f"Cargando modelo {config.QWEN_LABELER} en {config.DEVICE} (puede tardar)...")
+    vlm = QwenVLM(config.QWEN_LABELER).load()
 
-    # Se crea el objeto QwenVLM y se carga el modelo en memoria.
-    vlm = QwenVLM(modelo_prueba).load()
+    print(f"Procesando {len(imagenes)} imagen(es)...")
+    
+    for i, imagen_path in enumerate(imagenes, start=1):
+        n_cajas = procesar_imagen(vlm, imagen_path)
+        print(f"[{i}/{len(imagenes)}] {imagen_path.name}: {n_cajas} caja(s)")
 
-    # se abre imagen y se corre el modelo con el prompt de detección (Fase 1).
-    image = Image.open(imagen_prueba).convert("RGB")
-    respuesta = vlm.ask(image, config.PROMPT_LABELING)
-
-    print("\nRespuesta cruda de Qwen:")
-    print(respuesta)
-
-    # Se parsea la respuesta para extraer las cajas y se imprimen.
-    boxes = parse_boxes(respuesta)
-    print(f"\nCajas parseadas ({len(boxes)}):")
-    for box in boxes:
-        print(f"  {box}")
+    print("\nListo.")
 
 
 if __name__ == "__main__":

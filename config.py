@@ -24,17 +24,27 @@ CLASS_NAME = "husky"
 IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
 
-# Fase 1: auto-etiquetado (modelo grande, calidad sobre velocidad)
+# Tamaños de Qwen3.5 disponibles (mismos repos para etiquetador y validadores).
 # Nota: Qwen3.5 es nativamente multimodal, los repos de HF NO llevan sufijo "-VL"
 # (a diferencia de Qwen2.5-VL). Verificado en huggingface.co/Qwen/Qwen3.5-4B.
-QWEN_LABELER = "Qwen/Qwen3.5-4B"
-
-# Fase 4: validadores en cascada, se eligen por flag --validator
-QWEN_VALIDATORS = {
+QWEN_MODELS = {
     "0.8b": "Qwen/Qwen3.5-0.8B",
     "2b":   "Qwen/Qwen3.5-2B",
-    "4b":  "Qwen/Qwen3.5-4B"
+    "4b":   "Qwen/Qwen3.5-4B",
 }
+
+# Fase 1 (auto_labeling.py): qué tamaño usar como etiquetador. Cambiar aquí a mano
+# según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
+# quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
+QWEN_LABELER = QWEN_MODELS["0.8b"]
+
+# Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
+QWEN_VALIDATORS = QWEN_MODELS
+
+# Fase 1 (auto_labeling.py): límite de imágenes de data/raw/ a procesar por corrida.
+# None = todas. Cambiar aquí a un entero para probar rápido con pocas imágenes.
+#AUTO_LABELING_LIMIT = None
+AUTO_LABELING_LIMIT = 5
 
 YOLO_BASE    = "yolov8s.pt"          # pesos preentrenados de Ultralytics
 YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
