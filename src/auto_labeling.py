@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw
 
 sys.path.append(str(Path(__file__).parent.parent))
 import config
-from vlm_utils import QwenVLM, convert_to_yolo, parse_boxes
+from utils import QwenVLM, convert_to_yolo, parse_boxes
 
 
 def es_imagen(path: Path) -> bool:

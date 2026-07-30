@@ -1,11 +1,15 @@
 """
-Utilidades del VLM (Qwen). El nombre del archivo es genérico a propósito: todo lo
-de aquí es específico de Qwen EXCEPTO `convert_to_yolo`, que es una conversión de
-formato de cajas puramente geométrica.
+Utilidades generales del proyecto: todo lo relacionado a Qwen (VLM) y a YOLOv8
+(detector) vive junto aquí, a propósito, en vez de repartido en varios archivos.
 
-Se reutiliza tanto en Fase 1 (auto_labeling.py, prompt de detección) como en
-Fase 4 (hybrid_inference.py, prompt de validación binaria) para no repetir la
-carga del modelo en dos lugares.
+Sección Qwen (Fase 1: auto_labeling.py, Fase 4: hybrid_inference.py):
+- QwenVLM: carga + inferencia genérica de imagen+texto.
+- parse_boxes: parsea la respuesta cruda de Qwen a cajas [x1,y1,x2,y2].
+- convert_to_yolo: convierte una caja a formato de anotación YOLO (no es
+  específica de Qwen, es pura geometría, pero se dejó aquí para no repartir).
+
+Sección YOLOv8 (Fase 3/4: hybrid_inference.py):
+- YOLODetector: carga el detector ya entrenado + inferencia + recorte de detecciones.
 """
 
 import json
@@ -14,9 +18,12 @@ import re
 import torch
 from PIL import Image
 from transformers import AutoModelForMultimodalLM, AutoProcessor
+from ultralytics import YOLO
 
 import config
 
+
+# ---------- Qwen (VLM) ----------
 
 class QwenVLM:
     """Envoltorio sobre un modelo Qwen VL: carga + inferencia genérica de imagen+texto."""
@@ -122,7 +129,7 @@ def convert_to_yolo(box: list[float], class_id: int = config.CLASS_ID) -> str:
     normalizado 0-1. Una línea de este tipo por caja va en el .txt de cada imagen.
 
     NO es específica de Qwen (pura geometría/formato) — se dejó en este archivo
-    para no crear uno extra.
+    para no repartir utilidades chicas en varios módulos.
     """
     x1, y1, x2, y2 = box
 
@@ -135,3 +142,62 @@ def convert_to_yolo(box: list[float], class_id: int = config.CLASS_ID) -> str:
     y_center = y1_n + height / 2
 
     return f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+
+
+# ---------- YOLOv8 (detector) ----------
+
+class YOLODetector:
+    """Envoltorio sobre un modelo YOLOv8 de Ultralytics: carga + inferencia + recorte."""
+
+    def __init__(self, model_path=config.YOLO_TRAINED):
+        self.model_path = model_path
+        self.model = None
+
+    def load(self):
+        """Carga los pesos del modelo. Debe llamarse antes de detect()."""
+        self.model = YOLO(str(self.model_path))
+        return self
+
+    def detect(self, image: Image.Image) -> list[dict]:
+        """Corre inferencia sobre una imagen y regresa las detecciones como una
+        lista de dicts: {"box": (x1,y1,x2,y2) en píxeles, "conf": float, "class_id": int}.
+
+        Usa los thresholds de config.py (CONF_THRESHOLD bajo a propósito, para que
+        la cascada de Qwen filtre después los falsos positivos).
+        """
+        if self.model is None:
+            raise RuntimeError("Modelo no cargado. Llama a load() antes de detect().")
+
+        resultados = self.model.predict(
+            image,
+            conf=config.CONF_THRESHOLD,
+            iou=config.IOU_THRESHOLD,
+            verbose=False,
+        )
+
+        detecciones = []
+        for resultado in resultados:
+            for caja in resultado.boxes:
+                x1, y1, x2, y2 = caja.xyxy[0].tolist()
+                detecciones.append({
+                    "box": (x1, y1, x2, y2),
+                    "conf": float(caja.conf[0]),
+                    "class_id": int(caja.cls[0]),
+                })
+
+        return detecciones
+
+    def crop(self, image: Image.Image, box, padding: int = config.CROP_PADDING) -> Image.Image:
+        """Recorta la región de una detección (box en píxeles, formato x1,y1,x2,y2),
+        con un margen extra (padding, en píxeles) para no cortar al perro justo en el
+        borde. Antes de mandar el recorte al validador Qwen (Fase 4).
+        """
+        x1, y1, x2, y2 = box
+        ancho, alto = image.size
+
+        x1 = max(0, x1 - padding)
+        y1 = max(0, y1 - padding)
+        x2 = min(ancho, x2 + padding)
+        y2 = min(alto, y2 + padding)
+
+        return image.crop((x1, y1, x2, y2))

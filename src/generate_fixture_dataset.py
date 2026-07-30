@@ -26,7 +26,7 @@ from PIL import Image
 sys.path.append(str(Path(__file__).parent.parent))
 import config
 from auto_labeling import dibujar_cajas
-from vlm_utils import convert_to_yolo
+from utils import convert_to_yolo
 
 # ---------- Parámetros (editar aquí a mano) ----------
 PREFIJO = "husky"          # cambiar para simular otra clase/proyecto

@@ -229,3 +229,7 @@ data/labels_check_fixture/
 data/train_fixture/
 data/test_fixture/
 dataset_fixture.yaml
+
+# Pesos de YOLO (preentrenados, descargados por Ultralytics) y resultados de entrenamiento
+*.pt
+runs/

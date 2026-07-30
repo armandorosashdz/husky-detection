@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_images.py`, `src/vlm_utils.py`, `src/yolo_utils.py`, `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), and `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2) are implemented. `src/train_yolo.py`, `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `requirements.txt` and `dataset.yaml` (the real one, not `dataset_fixture.yaml`) are also empty placeholders. Before assuming a function/module exists, check the file is non-empty.
+This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_images.py`, `src/utils.py` (Qwen + YOLO utilities, merged into one file — see design note below), `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2), and `src/train_yolo.py` (Fase 2, fine-tunes YOLOv8s) are implemented. `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `requirements.txt` and `dataset.yaml` (the real one, not `dataset_fixture.yaml`) are also empty placeholders. Before assuming a function/module exists, check the file is non-empty.
+
+`train_yolo.py` has only been run against the **fixture** dataset so far (2 epochs, sanity check) — never against the real 100-image dataset. The real run needs `config.EPOCHS` back at its full value (currently `100`, was temporarily set to `2` for the fixture test) and `DATASET_YAML_PATH` in `train_yolo.py` switched to `config.DATASET_YAML`. On this CPU-only laptop, 2 epochs over the 70-image fixture train split took ~1.5 min each — budget accordingly for a real 100-epoch run (could be hours).
 
 `config.AUTO_LABELING_LIMIT` is currently `None` (set for the real full run), but `data/labels_auto/`/`data/labels_check/` only have output for 5 images so far — the full 100-image run hasn't actually been executed yet. Don't assume all 100 are labeled without checking.
 
@@ -33,27 +35,25 @@ The assignment PDF's example code uses `"Qwen/Qwen3.5-4B-VL"`-style IDs and `Aut
 The intended pipeline runs in phases, each corresponding to a module in `src/`:
 
 1. **Rename** (`src/rename_images.py`, implemented) — normalizes raw images in `data/raw/` to `husky_000.jpg ... husky_099.jpg`. Must run **before** auto-labeling, since re-running it after labels exist breaks the image↔label pairing (it does a two-pass rename through temp names to avoid collisions).
-2. **Auto-labeling** (`src/auto_labeling.py`, implemented, orchestrator only) — Phase 1: loops over `data/raw/` (up to `config.AUTO_LABELING_LIMIT` images), asks Qwen (`config.QWEN_LABELER`) for boxes via `PROMPT_LABELING`, writes YOLO-format `.txt` to `data/labels_auto/`, and saves a drawn-box visualization of each image to `data/labels_check/` for manual QA. Model loading, inference, response parsing, and YOLO-format conversion live in `src/vlm_utils.py` (see below); `auto_labeling.py` just calls into it.
-3. **Training** (`src/train_yolo.py`, stub) — Phase 2: fine-tunes a YOLOv8 model (`YOLO_BASE`) on `data/train/`. Preceded by `src/split_dataset.py` (implemented, separate script — see design note below), which turns `data/raw/` + `data/labels_auto/` into `data/train/`+`data/test/` and `dataset.yaml`.
-4. **Hybrid inference** (`src/hybrid_inference.py`, stub) — Phases 3-4: runs YOLO detection (`src/yolo_utils.py`) then validates crops with a cascade of small Qwen VLMs (`QWEN_VALIDATORS` in `config.py`) using `PROMPT_VALIDATION`. Per the no-CLI-args convention, which validator size(s) to run should be a `config.py` variable, not a `--validator` flag (the assignment PDF's example suggests a CLI flag, but that contradicts this project's convention — see note above).
+2. **Auto-labeling** (`src/auto_labeling.py`, implemented, orchestrator only) — Phase 1: loops over `data/raw/` (up to `config.AUTO_LABELING_LIMIT` images), asks Qwen (`config.QWEN_LABELER`) for boxes via `PROMPT_LABELING`, writes YOLO-format `.txt` to `data/labels_auto/`, and saves a drawn-box visualization of each image to `data/labels_check/` for manual QA. Model loading, inference, response parsing, and YOLO-format conversion live in `src/utils.py` (see below); `auto_labeling.py` just calls into it.
+3. **Training** (`src/train_yolo.py`, implemented) — Phase 2: fine-tunes a YOLOv8 model (`YOLO_BASE`) using the hyperparameters in `config.py` (`EPOCHS`, `IMG_SIZE`, `BATCH`, `PATIENCE`, `SEED`, `AUGMENT`), on whichever `dataset.yaml` `DATASET_YAML_PATH` (top of the file) points to. Preceded by `src/split_dataset.py` (implemented, separate script — see design note below), which turns `data/raw/` + `data/labels_auto/` into `data/train/`+`data/test/` and `dataset.yaml`.
+4. **Hybrid inference** (`src/hybrid_inference.py`, stub) — Phases 3-4: runs YOLO detection (`YOLODetector` in `src/utils.py`) then validates crops with a cascade of small Qwen VLMs (`QWEN_VALIDATORS` in `config.py`) using `PROMPT_VALIDATION`. Per the no-CLI-args convention, which validator size(s) to run should be a `config.py` variable, not a `--validator` flag (the assignment PDF's example suggests a CLI flag, but that contradicts this project's convention — see note above).
 5. **Metrics** (`src/metrics.py`, stub) — computes mAP, FP/FN, latency, and P-R curves into `results/metrics/` and `results/figures/`.
 
 All shared configuration — paths, model IDs, prompts, thresholds, hyperparameters — lives centrally in `config.py`. New scripts should import it (`import config`) rather than hardcoding paths or constants. Scripts run from the repo root add the parent dir to `sys.path` to import `config` (see `src/rename_images.py`).
 
-### `src/vlm_utils.py` design
+### `src/utils.py` design
 
-Despite the name (kept generic on purpose — see comments in the file for what lives where), this module holds everything Qwen/VLM-related plus the one generic bbox-format helper, reused by both `auto_labeling.py` (Fase 1) and `hybrid_inference.py` (Fase 4) so the model is loaded/wrapped in one place:
+Holds both Qwen/VLM stuff and the YOLO detector wrapper together in one file — an explicit project decision (previously split across `vlm_utils.py`/`yolo_utils.py`; merged on request into a single general-purpose `utils.py`). Reused by `auto_labeling.py` (Fase 1) and, once written, `hybrid_inference.py` (Fase 3/4).
 
+Qwen section:
 - `QwenVLM` class — `__init__(model_id)`, `load()`, `ask(image, prompt) -> str` (generic: runs the model and returns raw text, used both for the detection prompt and the binary Yes/No validation prompt).
 - `parse_boxes(response) -> list[[x1, y1, x2, y2]]` — Qwen-specific, parses its raw text response into boxes on the 0-1000 scale. **Important:** despite `PROMPT_LABELING` literally asking for `[ymin, xmin, ymax, xmax]`, Qwen3.5 ignores that and always responds in its native "grounding" schema `[{"bbox_2d": [x1, y1, x2, y2], "label": ...}, ...]`. Verified visually by drawing both interpretations on 3 sample images (see `data/labels_check/test_orden_*.jpg`, generated by `src/test_box_order.py`) — the `bbox_2d` `[x1,y1,x2,y2]` order was the one that actually bounded the dogs correctly. `PROMPT_LABELING` was updated to ask for this native format directly instead of fighting it.
-- `convert_to_yolo(box, class_id) -> str` — generic geometry/format conversion (0-1000 scale `[x1,y1,x2,y2]` → normalized YOLO `class_id x_center y_center width height`), not actually Qwen-specific but kept here to avoid an extra file; comment it clearly as such. Round-trip verified by `src/test_box_order.py` (Qwen box → YOLO line → back to pixels → drawn).
+- `convert_to_yolo(box, class_id) -> str` — generic geometry/format conversion (0-1000 scale `[x1,y1,x2,y2]` → normalized YOLO `class_id x_center y_center width height`), not actually Qwen-specific but kept here anyway per the merge decision above. Round-trip verified by `src/test_box_order.py` (Qwen box → YOLO line → back to pixels → drawn).
 
-### `src/yolo_utils.py` design
-
-Mirrors the same pattern as `QwenVLM`, but for the trained YOLOv8 detector — separate file because it's a different concern (running the detector, Fase 3/4) from `vlm_utils.py` (generating training labels, Fase 1):
-
+YOLO section:
 - `YOLODetector` class — `__init__(model_path=config.YOLO_TRAINED)`, `load()` (wraps `ultralytics.YOLO`), `detect(image) -> list[dict]` (runs inference with `config.CONF_THRESHOLD`/`IOU_THRESHOLD`, returns `{"box": (x1,y1,x2,y2) in pixels, "conf": float, "class_id": int}` per detection), `crop(image, box, padding=config.CROP_PADDING) -> Image` (crops a detection with margin, clamped to image bounds, for feeding into the Qwen validator in Fase 4).
-- Not yet used anywhere — `train_yolo.py` and `hybrid_inference.py` are still stubs.
+- Not yet used anywhere — `train_yolo.py` trains via `ultralytics.YOLO` directly (training isn't `YOLODetector`'s job); `YOLODetector` is meant for `hybrid_inference.py`, still a stub.
 
 ### `src/split_dataset.py` design
 
@@ -66,12 +66,21 @@ Prep step before Fase 2 (`train_yolo.py`), kept as a separate script rather than
 - `verificar_dataset_yaml(...)` — calls `ultralytics.data.utils.check_det_dataset()` on the generated yaml as a real validation (not just "the file was written"), catching structural problems before a training run would hit them.
 - All source/dest paths and `DEST_YAML_PATH` are variables at the top of the file (no CLI args), defaulting to the **fixture** paths (see below) with the real `config.RAW_DIR`/`config.LABELS_AUTO_DIR`/`config.TRAIN_DIR`/`config.TEST_DIR`/`config.DATASET_YAML` commented out alongside — swap which block is active before running for real.
 
+### `src/train_yolo.py` design
+
+Same no-CLI-args/fixture-toggle pattern as `split_dataset.py`:
+
+- `DATASET_YAML_PATH` is a variable at the top of the file, defaulting to `config.DATASET_YAML_FIXTURE` (real one commented out alongside) — swap before running for real.
+- All training hyperparameters come straight from `config.py` (`YOLO_BASE`, `EPOCHS`, `IMG_SIZE`, `BATCH`, `PATIENCE`, `SEED`, `DEVICE`, `AUGMENT` dict unpacked as kwargs) — no hardcoded values in the script itself.
+- `project`/`name` passed to `model.train()` are derived from `config.YOLO_TRAINED` (`.parent.parent` for the train dir, `.parent` of that for the project dir) with `exist_ok=True`, so results always land at the exact path `config.YOLO_TRAINED` and `YOLODetector` (in `utils.py`) expect — instead of Ultralytics' default behavior of creating `train2/`, `train3/`, etc. on repeated runs.
+- Verified against the fixture dataset (2 epochs, `EPOCHS` temporarily overridden — see Project status note above): downloads `yolov8s.pt`, correctly overrides `nc=80` → `nc=1`, trains, and saves `best.pt`/`last.pt` at `runs/detect/train/weights/`.
+
 ### Fixture pattern for testing pipeline steps safely
 
 Established pattern (first used for `split_dataset.py`, likely reusable for future steps): generate throwaway fake data instead of testing against the real dataset, so bugs in a new script can't corrupt `data/raw/`, `data/labels_auto/`, `data/train/`, `data/test/`, or the real `dataset.yaml`.
 
 - `config.py` centralizes the fixture paths (`RAW_FIXTURE_DIR`, `LABELS_AUTO_FIXTURE_DIR`, `LABELS_CHECK_FIXTURE_DIR`, `TRAIN_FIXTURE_DIR`, `TEST_FIXTURE_DIR`, `DATASET_YAML_FIXTURE`) — same convention as the real paths, deliberately kept in the central config even though they're only used by throwaway scripts, per an explicit project decision to avoid scattering hardcoded paths across scripts.
-- `src/generate_fixture_dataset.py` (throwaway, not part of the pipeline) — generates `N_IMAGENES` blank images with 1-3 random boxes each, writing them through the **real** `dibujar_cajas()` (imported from `auto_labeling.py`) and `convert_to_yolo()` (from `vlm_utils.py`), so the fixture format exactly matches what the real pipeline produces. `PREFIJO` (default `"husky"`) is configurable so the fixture can simulate a different naming scheme without touching the real pipeline.
+- `src/generate_fixture_dataset.py` (throwaway, not part of the pipeline) — generates `N_IMAGENES` blank images with 1-3 random boxes each, writing them through the **real** `dibujar_cajas()` (imported from `auto_labeling.py`) and `convert_to_yolo()` (from `utils.py`), so the fixture format exactly matches what the real pipeline produces. `PREFIJO` (default `"husky"`) is configurable so the fixture can simulate a different naming scheme without touching the real pipeline.
 - `src/split_dataset.py` then runs against `RAW_FIXTURE_DIR`/`LABELS_AUTO_FIXTURE_DIR` by default, writing to `TRAIN_FIXTURE_DIR`/`TEST_FIXTURE_DIR`/`DATASET_YAML_FIXTURE` — verified working (100→70/30 split, `check_det_dataset` passes).
 
 ### Fase 2 design decision: single class, COCO classes NOT preserved
@@ -117,18 +126,23 @@ python src/split_dataset.py
 ```
 Prep step before Fase 2: splits labeled images into train/test and writes `dataset.yaml`. **Check which path block is active at the top of the file first** — it defaults to the fixture paths, not the real ones (see fixture pattern note below).
 
-No build, lint, or test tooling is configured (`requirements.txt` is empty, no test suite exists).
+```bash
+python src/train_yolo.py
+```
+Fase 2: fine-tunes `config.YOLO_BASE` (downloads it via Ultralytics if not cached) on whichever dataset `DATASET_YAML_PATH` (top of the file) points to, using `config.py`'s hyperparameters. Saves to `config.YOLO_TRAINED`. **Check `DATASET_YAML_PATH` and `config.EPOCHS` before running for real** — defaults/leftover values may point at the fixture dataset or a reduced epoch count from testing.
+
+No build, lint, or test tooling is configured (`requirements.txt` is empty, no test suite exists). `*.pt` (model weights) and `runs/` (Ultralytics training outputs) are gitignored — never commit these, they're regenerated by `train_yolo.py`.
 
 ## Assignment specification (Tarea #4)
 
 This repo implements a graded assignment ("Pipeline Autónomo de Detección – Auto-etiquetado con Qwen VL, Transfer Learning y Validación"). Full spec: `Especificaciones de Tarea 4_ Pipeline Autónomo con VLM y Transfer Learning.pdf` (repo root). Key constraints future work must respect:
 
-- **Fase 1 (auto_labeling.py):** 100 unlabeled husky images (multiple dogs per image), auto-labeled locally with **Qwen3.5** (0.8B/2B/4B — see model ID note above; PDF says 2B or 4B, but GPU is unavailable here so size choice is memory-constrained). Qwen actually returns boxes as `[x1, y1, x2, y2]` on a 0-1000 scale (native format — see `vlm_utils.py` design note, this differs from what the PDF's example prompt asks for); must be converted to YOLO format (`class_id x_center y_center width height`, normalized 0-1) via `convert_to_yolo` — one `.txt` per image, same basename as the image. Bounding boxes must then be visually verified (drawn on images, → `data/labels_check/`).
+- **Fase 1 (auto_labeling.py):** 100 unlabeled husky images (multiple dogs per image), auto-labeled locally with **Qwen3.5** (0.8B/2B/4B — see model ID note above; PDF says 2B or 4B, but GPU is unavailable here so size choice is memory-constrained). Qwen actually returns boxes as `[x1, y1, x2, y2]` on a 0-1000 scale (native format — see `utils.py` design note, this differs from what the PDF's example prompt asks for); must be converted to YOLO format (`class_id x_center y_center width height`, normalized 0-1) via `convert_to_yolo` — one `.txt` per image, same basename as the image. Bounding boxes must then be visually verified (drawn on images, → `data/labels_check/`).
 - **Fase 2 (train_yolo.py):** Fine-tune **YOLOv8s** (Ultralytics, pretrained) on the 70-image train split via `dataset.yaml`; the PDF asks to keep the other pretrained COCO classes active (don't replace the head), but this project deliberately deviates from that — see "Fase 2 design decision" above. Use aggressive augmentation (mosaic, mixup, hsv_h, etc. — already parameterized in `config.py`'s `AUGMENT` dict) since the dataset is small. The remaining 30 images are test-only.
 - **Fase 3 (hybrid_inference.py — deployment part):** Optimized Python inference script loading the trained YOLOv8s weights, simulating a production image stream.
 - **Fase 4 (hybrid_inference.py — validation part):** Cascade validation — every YOLO detection is cropped (`YOLODetector.crop`) and sent to a Qwen VL validator with a binary Yes/No prompt (`PROMPT_VALIDATION`); "No" discards the detection as a false positive. Must run and compare **both** validator sizes: 0.8B and 2B (`QWEN_VALIDATORS` in `config.py` — pick which one via a config variable, not a CLI flag, per this project's convention). Recommended: keep `CONF_THRESHOLD` low so more raw detections reach the cascade (already set in `config.py`).
 - **Metrics (metrics.py):** For each of the 3 pipeline configs (YOLOv8s alone, +0.8B validator, +2B validator), compute mAP@0.5, false positives, false negatives, inference latency (ms), and real FPS — feeds the comparison table and 3 Precision-Recall curves required in the report.
 
 ### Required deliverables
-- Source: `auto_labeling.py` (done), `train_yolo.py` (or notebook), `hybrid_inference.py` (these two still empty stubs — see Project status above).
+- Source: `auto_labeling.py` (done), `train_yolo.py` (done, not yet run for real — see Project status above), `hybrid_inference.py` (still an empty stub).
 - Technical report (PDF): filled comparison table (3 configs × mAP/FP/FN/latency/FPS), training curves (bbox loss, objectness loss, precision/recall/mAP@0.5), confusion matrix on the 30-image test set, visual results (successes, false positives mitigated by each validator, failure cases), and answers to the critical-analysis questionnaire (compute cost of 0.8B vs 2B cascade and real-time viability, error propagation from Fase 1 labeling bias into YOLO's bbox regression loss, prompt-engineering sensitivity, and CNN classifier vs VLM validator tradeoffs).

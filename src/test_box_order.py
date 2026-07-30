@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 
 sys.path.append(str(Path(__file__).parent.parent))
 import config
-from vlm_utils import QwenVLM, convert_to_yolo, parse_boxes
+from utils import QwenVLM, convert_to_yolo, parse_boxes
 
 IMAGENES_PRUEBA = ["husky_000.jpg", "husky_001.jpg", "husky_002.jpg"]
 
