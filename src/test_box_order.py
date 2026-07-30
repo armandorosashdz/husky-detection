@@ -1,12 +1,9 @@
 """
 SCRIPT DE PRUEBA DESCARTABLE - no es parte del pipeline final.
 
-Ya se confirmó visualmente que Qwen3.5 devuelve las cajas como [x1,y1,x2,y2]
-(ver commits/conversación anterior). Este script ahora verifica de punta a punta
+Este script verifica de punta a punta
 que convert_to_yolo() hace bien la conversión: dibuja, sobre varias imágenes, el
-bounding box reconstruido a partir de la línea YOLO generada (en vez de las
-coordenadas crudas de Qwen), para confirmar que el round-trip caja -> .txt YOLO
--> caja en píxeles da un rectángulo correcto.
+bounding box reconstruido a partir de la línea YOLO generada.
 
 Guarda los resultados en data/labels_check/ (prefijo test_orden_), sobrescribiendo
 las imágenes de la prueba anterior.
@@ -42,7 +39,7 @@ def yolo_a_pixeles(linea_yolo, ancho, alto):
 
 
 def main():
-    modelo = config.QWEN_VALIDATORS["0.8b"]
+    modelo = config.QWEN_LABELER
     print(f"Cargando modelo {modelo}...")
     vlm = QwenVLM(modelo).load()
 

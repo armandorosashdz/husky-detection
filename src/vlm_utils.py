@@ -1,7 +1,7 @@
 """
 Utilidades del VLM (Qwen). El nombre del archivo es genérico a propósito: todo lo
 de aquí es específico de Qwen EXCEPTO `convert_to_yolo`, que es una conversión de
-formato de cajas puramente geométrica (ver CLAUDE.md).
+formato de cajas puramente geométrica.
 
 Se reutiliza tanto en Fase 1 (auto_labeling.py, prompt de detección) como en
 Fase 4 (hybrid_inference.py, prompt de validación binaria) para no repetir la

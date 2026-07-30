@@ -221,3 +221,11 @@ __marimo__/
 .vscode/
 .idea/
 .DS_Store
+
+# Datos fixture (regenerables con generate_fixture_dataset.py + split_dataset.py)
+data/raw_fixture/
+data/labels_auto_fixture/
+data/labels_check_fixture/
+data/train_fixture/
+data/test_fixture/
+dataset_fixture.yaml

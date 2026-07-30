@@ -14,25 +14,31 @@ husky-detection/
 │   ├── vlm_utils.py             # QwenVLM (carga+ask) + parse_boxes + convert_to_yolo
 │   ├── yolo_utils.py            # YOLODetector: carga YOLOv8 entrenado + detect + crop
 │   ├── auto_labeling.py         # Fase 1: raw/ → labels_auto/ + labels_check/ (implementado)
+│   ├── split_dataset.py         # prepara train/test (70/30) + dataset.yaml, previo a Fase 2 (implementado)
 │   ├── train_yolo.py            # Fase 2 (pendiente)
 │   ├── hybrid_inference.py      # Fases 3-4 (pendiente)
 |   ├── rename_images.py         # Renombra las imagenes en data/raw/ (implementado)
+│   ├── generate_fixture_dataset.py  # script de prueba descartable: genera dataset falso
 │   ├── test_box_order.py        # script de prueba descartable, no es parte del pipeline
 │   └── metrics.py               # mAP, FP/FN, latencia, curvas P-R (pendiente)
-├── dataset.yaml                 # vacío por ahora (se llena en Fase 2)
+├── dataset.yaml                 # vacío por ahora (lo genera split_dataset.py)
+├── dataset_fixture.yaml         # generado por split_dataset.py al correr contra el fixture
 ├── data/                        # sí está en el repo (incluyendo las 100 imágenes crudas)
 │   ├── raw/                     # 100 imágenes sin anotar (crudas)
 │   ├── labels_auto/             # .txt generados por Qwen (Fase 1, en progreso)
 │   ├── labels_check/            # visualizaciones con BB dibujadas (Fase 1, en progreso)
-│   ├── train/
-│   │   ├── images/              # 70
-│   │   └── labels/
-│   └── test/
-│       ├── images/              # 30
-│       └── labels/
+│   ├── train/                   # imágenes+labels de train, los llena split_dataset.py
+│   ├── test/                    # imágenes+labels de test, los llena split_dataset.py
+│   ├── raw_fixture/             # dataset falso (generate_fixture_dataset.py), no tocar a mano
+│   ├── labels_auto_fixture/
+│   ├── labels_check_fixture/
+│   ├── train_fixture/
+│   └── test_fixture/
 ├── results/
 │   ├── metrics/                 # un JSON por configuración
 │   └── figures/                 # curvas, matriz de confusión, ejemplos
 └── report/
     └── reporte.pdf
 ```
+
+Nota sobre `.gitkeep`: solo quedan en las carpetas que siguen vacías (`data/test/`, `data/train/`, `report/figures/`, `report/metrics/`, `results/`). Se quitaron de las que ya tienen contenido real trackeado (git no los necesita ahí).

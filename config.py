@@ -16,6 +16,18 @@ RESULTS   = ROOT / "results"
 METRICS_DIR = RESULTS / "metrics"
 FIGURES_DIR = RESULTS / "figures"
 
+DATASET_YAML = ROOT / "dataset.yaml"
+
+# Carpetas y dataset.yaml "fixture": datos falsos generados por
+# src/generate_fixture_dataset.py, usados por src/generate_fixture_dataset.py y
+# src/split_dataset.py para probar el pipeline sin tocar los datos reales.
+RAW_FIXTURE_DIR          = DATA / "raw_fixture"
+LABELS_AUTO_FIXTURE_DIR  = DATA / "labels_auto_fixture"
+LABELS_CHECK_FIXTURE_DIR = DATA / "labels_check_fixture"
+TRAIN_FIXTURE_DIR        = DATA / "train_fixture"
+TEST_FIXTURE_DIR         = DATA / "test_fixture"
+DATASET_YAML_FIXTURE     = ROOT / "dataset_fixture.yaml"
+
 # ---------- Modelos ----------
 CLASS_ID   = 0
 CLASS_NAME = "husky"
@@ -37,14 +49,16 @@ QWEN_MODELS = {
 # según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
 QWEN_LABELER = QWEN_MODELS["0.8b"]
+#QWEN_LABELER = QWEN_MODELS["4b"]
 
 # Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
 QWEN_VALIDATORS = QWEN_MODELS
 
 # Fase 1 (auto_labeling.py): límite de imágenes de data/raw/ a procesar por corrida.
 # None = todas. Cambiar aquí a un entero para probar rápido con pocas imágenes.
-#AUTO_LABELING_LIMIT = None
-AUTO_LABELING_LIMIT = 5
+
+AUTO_LABELING_LIMIT = None
+#AUTO_LABELING_LIMIT = 5
 
 YOLO_BASE    = "yolov8s.pt"          # pesos preentrenados de Ultralytics
 YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
@@ -72,6 +86,8 @@ PROMPT_VALIDATION = (
 )
 
 # ---------- Hiperparámetros ----------
+# Aún no se usan, pero se dejan aquí para referencia futura (entrenamiento YOLOv8).
+
 # Entrenamiento
 EPOCHS     = 100
 IMG_SIZE   = 640

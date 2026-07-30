@@ -72,10 +72,11 @@ def main():
     config.LABELS_CHECK_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"Cargando modelo {config.QWEN_LABELER} en {config.DEVICE} (puede tardar)...")
-    vlm = QwenVLM(config.QWEN_LABELER).load()
+    modelo = config.QWEN_LABELER
+    vlm = QwenVLM(modelo).load()
 
     print(f"Procesando {len(imagenes)} imagen(es)...")
-    
+
     for i, imagen_path in enumerate(imagenes, start=1):
         n_cajas = procesar_imagen(vlm, imagen_path)
         print(f"[{i}/{len(imagenes)}] {imagen_path.name}: {n_cajas} caja(s)")
