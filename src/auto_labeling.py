@@ -72,6 +72,7 @@ def main():
     config.LABELS_CHECK_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"Cargando modelo {config.QWEN_LABELER} en {config.DEVICE} (puede tardar)...")
+    
     modelo = config.QWEN_LABELER
     vlm = QwenVLM(modelo).load()
 

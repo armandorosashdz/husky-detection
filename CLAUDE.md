@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_images.py`, `src/utils.py` (Qwen + YOLO utilities, merged into one file — see design note below), `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2), and `src/train_yolo.py` (Fase 2, fine-tunes YOLOv8s) are implemented. `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `requirements.txt` and `dataset.yaml` (the real one, not `dataset_fixture.yaml`) are also empty placeholders. Before assuming a function/module exists, check the file is non-empty.
+This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_images.py`, `src/utils.py` (Qwen + YOLO utilities, merged into one file — see design note below), `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2), and `src/train_yolo.py` (Fase 2, fine-tunes YOLOv8s) are implemented. `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `dataset.yaml` (the real one, not `dataset_fixture.yaml`) is still an empty placeholder. `requirements.txt` now lists the real dependencies (`torch`, `torchvision`, `transformers`, `accelerate`, `ultralytics`, `pillow`). Before assuming a function/module exists, check the file is non-empty.
 
 `train_yolo.py` has only been run against the **fixture** dataset so far (2 epochs, sanity check) — never against the real 100-image dataset. The real run needs `config.EPOCHS` back at its full value (currently `100`, was temporarily set to `2` for the fixture test) and `DATASET_YAML_PATH` in `train_yolo.py` switched to `config.DATASET_YAML`. On this CPU-only laptop, 2 epochs over the 70-image fixture train split took ~1.5 min each — budget accordingly for a real 100-epoch run (could be hours).
 
-`config.AUTO_LABELING_LIMIT` is currently `None` (set for the real full run), but `data/labels_auto/`/`data/labels_check/` only have output for 5 images so far — the full 100-image run hasn't actually been executed yet. Don't assume all 100 are labeled without checking.
+`config.AUTO_LABELING_LIMIT` is currently `None` (set for the real full run), but `data/labels_auto/`/`data/labels_check/` only have output for 6 images so far (`husky_000`-`004` and `husky_064`, non-contiguous) — the full 100-image run hasn't actually been executed yet. Don't assume all 100 are labeled without checking.
+
+`config.py` also has a commented-out **draft alternate `PROMPT_LABELING`** (a bare triple-quoted string right after the active prompt, syntactically valid but inert — acts as a big comment) with stricter instructions (tight boxes, no guessing occluded parts, explicit no-markdown-fences). Not active; kept for future prompt-engineering experiments (relevant to the assignment's prompt-sensitivity question).
 
 **Project convention: no CLI arguments.** Scripts (`auto_labeling.py`, and presumably `hybrid_inference.py`/`train_yolo.py` once written) take no `argparse` flags — anything that needs to vary between runs (which Qwen size to use, how many images to process, etc.) is a variable in `config.py` instead, edited by hand. This was an explicit project decision, not an oversight — don't reintroduce CLI args without checking first.
 
@@ -18,10 +20,11 @@ This is an early-stage academic project (VLM-assisted auto-labeling + YOLO trans
 
 This laptop has **no NVIDIA/CUDA GPU** (AMD integrated graphics only), despite the assignment asking to run Qwen on GPU. Consequences baked into the current code:
 - `config.py`: `DEVICE = "cpu"`, `DTYPE = "float32"` (float16 generation isn't well supported on CPU). Switch back to `"cuda"`/`"float16"` if this ever runs on a machine with an NVIDIA GPU.
-- `config.QWEN_LABELER` is currently set to `QWEN_MODELS["0.8b"]`, not the 4B the assignment asks for — the 2B model already runs out of RAM (~14GB total, ~7GB free) when loaded in float32 on CPU, so 4B has no chance. `QWEN_MODELS` (in `config.py`) holds all three sizes; change which one `QWEN_LABELER` points to by editing that one line, no code changes needed. On a machine with a real GPU, switch it to `QWEN_MODELS["2b"]` or `["4b"]` per the assignment.
+- `config.QWEN_LABELER` is currently set to `QWEN_MODELS["0.8b"]`, not the 4B the assignment asks for — the 2B model already runs out of RAM (~14GB total, ~7GB free) when loaded in float32 on CPU, so 4B has no chance. `QWEN_MODELS` (in `config.py`) holds four sizes (`0.8b`/`2b`/`4b`/`9b`); change which one `QWEN_LABELER` points to by editing that one line, no code changes needed. On a machine with a real GPU, switch it to `QWEN_MODELS["2b"]`/`["4b"]` per the assignment, or `["9b"]` if available — **and also flip `DEVICE`/`DTYPE` to `"cuda"`/`"float16"`**, both changes have to happen together or it'll try to load a multi-GB model in float32 on CPU and fail.
 - `config.AUTO_LABELING_LIMIT` caps how many images `auto_labeling.py` processes per run (`None` = all of `data/raw/`). Set it to a small int for quick local testing.
-- Dependencies (`torch`, `transformers`, `accelerate`) live in the **conda env `tarea3`** (`C:\Users\Armando\anaconda3\envs\tarea3`), which already had `torch`/`torchvision`/`ultralytics`/`pillow` from a prior assignment. Run scripts with `conda run -n tarea3 python src/<script>.py`, or `conda activate tarea3` first. Not reflected in `requirements.txt` (still empty).
+- Dependencies (`torch`, `transformers`, `accelerate`) live in the **conda env `tarea3`** (`C:\Users\Armando\anaconda3\envs\tarea3`), which already had `torch`/`torchvision`/`ultralytics`/`pillow` from a prior assignment. Run scripts with `conda run -n tarea3 python src/<script>.py`, or `conda activate tarea3` first. `requirements.txt` lists these for other environments (e.g. Google Colab), but this laptop's actual env was set up manually, not via `pip install -r requirements.txt`.
 - Considered Ollama (quantized GGUF, much lower RAM) as an alternative runtime if memory keeps being a blocker — not adopted yet, would require rewriting `QwenVLM` to talk to Ollama's HTTP API instead of `transformers`.
+- **Running on Google Colab (GPU)**: clone the repo (images are committed, no separate download needed), `pip install transformers accelerate ultralytics` (torch/torchvision already preinstalled with CUDA), then flip `DEVICE`/`DTYPE` to `"cuda"`/`"float16"` and `QWEN_LABELER` to a bigger size in `config.py` before running. Colab sessions are ephemeral — anything not committed back to the repo (or copied to Drive) is lost when the session ends; `*.pt`/`runs/` are gitignored on purpose so trained weights won't survive unless explicitly pushed/saved elsewhere.
 
 ### Model IDs — real names differ from the PDF spec
 
@@ -94,6 +97,8 @@ The assignment PDF says *"dejen las otras clases pre-entrenadas activas"* (keep 
 
 ```
 data/raw/            # unannotated source images (husky_NNN.ext), input to auto-labeling
+                      # also has Dataset2.zip, a backup archive of the same images;
+                      # ignored by the pipeline (es_imagen() filters by extension)
 data/labels_auto/    # YOLO-format .txt labels generated by the Qwen labeler
 data/labels_check/   # visualizations with drawn bounding boxes, for manual QA
 data/train/          # 70% split: images/ + labels/, written by split_dataset.py
@@ -131,7 +136,7 @@ python src/train_yolo.py
 ```
 Fase 2: fine-tunes `config.YOLO_BASE` (downloads it via Ultralytics if not cached) on whichever dataset `DATASET_YAML_PATH` (top of the file) points to, using `config.py`'s hyperparameters. Saves to `config.YOLO_TRAINED`. **Check `DATASET_YAML_PATH` and `config.EPOCHS` before running for real** — defaults/leftover values may point at the fixture dataset or a reduced epoch count from testing.
 
-No build, lint, or test tooling is configured (`requirements.txt` is empty, no test suite exists). `*.pt` (model weights) and `runs/` (Ultralytics training outputs) are gitignored — never commit these, they're regenerated by `train_yolo.py`.
+No build, lint, or test tooling is configured (`requirements.txt` has no build/test tooling, just runtime deps; no test suite exists). `*.pt` (model weights) and `runs/` (Ultralytics training outputs) are gitignored — never commit these, they're regenerated by `train_yolo.py`.
 
 ## Assignment specification (Tarea #4)
 

@@ -7,7 +7,7 @@ husky-detection/
 ├── README.md                    # setup, cómo correr, quién hace qué
 ├── CLAUDE.md                    # guía del repo para Claude Code (arquitectura, estado, decisiones)
 ├── Especificaciones de Tarea 4...pdf   # enunciado original de la tarea
-├── requirements.txt              # vacío por ahora; dependencias reales viven en el env conda "tarea3" (ver CLAUDE.md)
+├── requirements.txt              # torch, torchvision, transformers, accelerate, ultralytics, pillow (`pip install -r requirements.txt`)
 ├── .gitignore                   # __pycache__, *.pt, runs/, data/*_fixture/, dataset_fixture.yaml
 ├── config.py                    # model_ids, prompts, thresholds, rutas, límites — todo lo configurable vive aquí
 ├── src/
@@ -24,7 +24,7 @@ husky-detection/
 ├── yolov8s.pt                   # pesos preentrenados, descargados por Ultralytics al entrenar (gitignored)
 ├── runs/                        # resultados de entrenamiento de Ultralytics, incl. runs/detect/train/weights/best.pt (gitignored)
 ├── data/                        # sí está en el repo (incluyendo las 100 imágenes crudas)
-│   ├── raw/                     # 100 imágenes sin anotar (crudas)
+│   ├── raw/                     # 100 imágenes sin anotar (crudas) + Dataset2.zip (respaldo)
 │   ├── labels_auto/             # .txt generados por Qwen (Fase 1, en progreso)
 │   ├── labels_check/            # visualizaciones con BB dibujadas (Fase 1, en progreso)
 │   ├── train/                   # imágenes+labels de train, los llena split_dataset.py

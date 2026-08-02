@@ -43,6 +43,7 @@ QWEN_MODELS = {
     "0.8b": "Qwen/Qwen3.5-0.8B",
     "2b":   "Qwen/Qwen3.5-2B",
     "4b":   "Qwen/Qwen3.5-4B",
+    "9b":  "Qwen/Qwen3.5-9B",
 }
 
 # Fase 1 (auto_labeling.py): qué tamaño usar como etiquetador. Cambiar aquí a mano
@@ -50,6 +51,7 @@ QWEN_MODELS = {
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
 QWEN_LABELER = QWEN_MODELS["0.8b"]
 #QWEN_LABELER = QWEN_MODELS["4b"]
+# QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="cuda" abajo), no en esta laptop
 
 # Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
 QWEN_VALIDATORS = QWEN_MODELS
@@ -67,7 +69,9 @@ YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
 DEVICE = "cpu"
+#DEVICE = "cuda"
 DTYPE  = "float32"
+
 
 # ---------- Prompts (versionados: evidencia para la pregunta 4) ----------
 # Nota: se probó pedir [ymin, xmin, ymax, xmax] explícitamente y Qwen3.5 lo ignoraba,
@@ -80,6 +84,25 @@ PROMPT_LABELING = (
     "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
     "Return only the JSON, no explanation."
 )
+"""
+PROMPT_LABELING = (
+   "Locate every single husky dog visible in this image, even if there "
+    "are several of them. Do not stop after the first one -- include ALL "
+    "husky dogs you can see as separate entries in the array. "
+    "Output ONLY a JSON array, no explanation, no markdown fences, "
+    "no bold/asterisks, in this exact format: "
+    '[{"bbox_2d": [x1, y1, x2, y2], "label": "husky dog"}, ...] '
+    "where coordinates are normalized to a 0-1000 scale relative to the "
+    "image width and height, (x1, y1) is the top-left corner and "
+    "(x2, y2) is the bottom-right corner. "
+    "Each box must be a TIGHT bounding box around only the VISIBLE part of "
+    "each dog's body. If a dog is partially occluded by another dog, an "
+    "object, or the edge of the image, draw the box only around the "
+    "visible pixels of that dog -- do NOT guess or extend the box to cover "
+    "body parts that are hidden or not visible in the image. "
+    "If no husky dog is visible, output [].
+)
+"""
 
 PROMPT_VALIDATION = (
     "Is this a husky dog inside this image crop? Answer only Yes or No."
