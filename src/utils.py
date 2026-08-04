@@ -98,6 +98,15 @@ class QwenVLM:
             output_ids[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True
         )
 
+        # Cada imagen trae una resolución distinta -> cada llamada reserva tensores
+        # de tamaño distinto en CUDA (input, KV-cache). Sin liberar explícitamente,
+        # la memoria se fragmenta con cada llamada nueva y en un loop de muchas
+        # imágenes (ej. auto_labeling.py sobre las 100) termina en OutOfMemoryError
+        # aunque cada llamada individual quepa de sobra. No afecta a CPU.
+        del inputs, output_ids
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         return response.strip()
 
 
