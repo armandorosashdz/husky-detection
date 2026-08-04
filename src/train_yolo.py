@@ -3,7 +3,7 @@ Fase 2: Transfer Learning (ajuste fino de YOLOv8s).
 
 Carga YOLOv8s preentrenado (config.YOLO_BASE) y lo afina sobre el dataset definido
 en DATASET_YAML_PATH (train/val), usando los hiperparámetros centralizados en
-config.py (EPOCHS, IMG_SIZE, BATCH, PATIENCE, SEED, AUGMENT).
+config.py (EPOCHS, IMG_SIZE, BATCH, PATIENCE, SEED, OPTIMIZER, LR0, FREEZE, AUGMENT).
 
 Nota de diseño (ver CLAUDE.md, "Fase 2 design decision"): se usa nc=1 (solo
 "husky"), lo que reinicializa la cabeza de detección y pierde las 80 clases de
@@ -59,6 +59,9 @@ def main():
         patience=config.PATIENCE,
         seed=config.SEED,
         device=config.DEVICE,
+        optimizer=config.OPTIMIZER,
+        lr0=config.LR0,
+        freeze=config.FREEZE,
         project=str(project_dir),
         name=train_dir.name,
         exist_ok=True,

@@ -11,10 +11,12 @@ LABELS_AUTO_DIR = DATA / "labels_auto"
 LABELS_CHECK_DIR= DATA / "labels_check"
 TRAIN_DIR       = DATA / "train"
 TEST_DIR        = DATA / "test"
+VALIDATION_DIR        = DATA / "validation"
 
 RESULTS   = ROOT / "results"
 METRICS_DIR = RESULTS / "metrics"
 FIGURES_DIR = RESULTS / "figures"
+MODELS_DIR  = RESULTS / "models"
 
 DATASET_YAML = ROOT / "dataset.yaml"
 
@@ -56,6 +58,7 @@ QWEN_MODELS = {
 # según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
 QWEN_LABELER = QWEN_MODELS["0.8b"]
+# QWEN_LABELER = QWEN_MODELS["2b"]
 # QWEN_LABELER = QWEN_MODELS["4b"]
 # QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="auto" abajo), no en esta laptop
 
@@ -128,6 +131,16 @@ IMG_SIZE   = 640
 BATCH      = 8
 PATIENCE   = 20
 SEED       = 42          # también controla el split 70/30
+
+# Con optimizer="auto" (default de Ultralytics), cls_loss explotó (3.5 -> 18 -> 36)
+# a partir de la época 3 y el entrenamiento nunca se recuperó (70 imágenes, solo
+# 9 batches/época, LR elegido automáticamente demasiado agresivo para eso). Se fija
+# el optimizador explícito para que LR0 realmente se use (con "auto", Ultralytics
+# ignora el LR0 que le pases). FREEZE congela las primeras 10 capas (el backbone,
+# capas 0-9 del resumen del modelo) -- transfer learning más estable con pocos datos.
+OPTIMIZER  = "AdamW"
+LR0        = 0.001       # la mitad del que "auto" eligió (0.002) y explotó
+FREEZE     = 10
 
 # Augmentación (bajo volumen de datos → agresiva)
 AUGMENT = {
