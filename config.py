@@ -36,6 +36,13 @@ CLASS_NAME = "husky"
 IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
 
+# rename_images.py también redimensiona las imágenes que excedan esto (en su
+# lado más grande, manteniendo aspecto, nunca agranda). Algunas imágenes de
+# data/raw/ son enormes y hacían que Qwen intentara reservar >10GB de golpe en
+# una sola llamada de atención (escala cuadráticamente con los tokens visuales,
+# y una imagen de resolución muy alta genera muchísimos). Ver CLAUDE.md.
+MAX_IMAGE_DIM = 1280
+
 # Tamaños de Qwen3.5 disponibles (mismos repos para etiquetador y validadores).
 # Nota: Qwen3.5 es nativamente multimodal, los repos de HF NO llevan sufijo "-VL"
 # (a diferencia de Qwen2.5-VL). Verificado en huggingface.co/Qwen/Qwen3.5-4B.
