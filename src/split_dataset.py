@@ -24,18 +24,18 @@ sys.path.append(str(Path(__file__).parent.parent))
 import config
 
 # ---------- Parámetros (editar aquí a mano) ----------
-SOURCE_IMAGES_DIR = config.RAW_FIXTURE_DIR
-SOURCE_LABELS_DIR = config.LABELS_AUTO_FIXTURE_DIR
-DEST_TRAIN_DIR = config.TRAIN_FIXTURE_DIR
-DEST_TEST_DIR = config.TEST_FIXTURE_DIR
-DEST_YAML_PATH = config.DATASET_YAML_FIXTURE
+#SOURCE_IMAGES_DIR = config.RAW_FIXTURE_DIR
+#SOURCE_LABELS_DIR = config.LABELS_AUTO_FIXTURE_DIR
+#DEST_TRAIN_DIR = config.TRAIN_FIXTURE_DIR
+#DEST_TEST_DIR = config.TEST_FIXTURE_DIR
+#DEST_YAML_PATH = config.DATASET_YAML_FIXTURE
 
 # Rutas reales, para cuando ya se haya probado con el fixture:
-# SOURCE_IMAGES_DIR = config.RAW_DIR
-# SOURCE_LABELS_DIR = config.LABELS_AUTO_DIR
-# DEST_TRAIN_DIR = config.TRAIN_DIR
-# DEST_TEST_DIR = config.TEST_DIR
-# DEST_YAML_PATH = config.DATASET_YAML
+SOURCE_IMAGES_DIR = config.RAW_DIR
+SOURCE_LABELS_DIR = config.LABELS_AUTO_DIR
+DEST_TRAIN_DIR = config.TRAIN_DIR
+DEST_TEST_DIR = config.TEST_DIR
+DEST_YAML_PATH = config.DATASET_YAML
 
 TRAIN_RATIO = config.TRAIN_RATIO
 SEED = config.SEED

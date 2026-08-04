@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_images.py`, `src/utils.py` (Qwen + YOLO utilities, merged into one file — see design note below), `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2), and `src/train_yolo.py` (Fase 2, fine-tunes YOLOv8s) are implemented. `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `dataset.yaml` (the real one, not `dataset_fixture.yaml`) is still an empty placeholder. `requirements.txt` now lists the real dependencies (`torch`, `torchvision`, `transformers`, `accelerate`, `ultralytics`, `pillow`). Before assuming a function/module exists, check the file is non-empty.
+This is an early-stage academic project (VLM-assisted auto-labeling + YOLO transfer learning pipeline for husky detection). `src/rename_and_resize_images.py`, `src/utils.py` (Qwen + YOLO utilities, merged into one file — see design note below), `src/auto_labeling.py` (Fase 1, full loop over `data/raw/`), `src/split_dataset.py` (train/test split + `dataset.yaml` generation, prep step before Fase 2), and `src/train_yolo.py` (Fase 2, fine-tunes YOLOv8s) are implemented. `src/hybrid_inference.py`, `src/metrics.py` are still **empty stubs**. `dataset.yaml` (the real one, not `dataset_fixture.yaml`) is still an empty placeholder. `requirements.txt` now lists the real dependencies (`torch`, `torchvision`, `transformers`, `accelerate`, `ultralytics`, `pillow`). Before assuming a function/module exists, check the file is non-empty.
 
 `train_yolo.py` has only been run against the **fixture** dataset so far (2 epochs, sanity check) — never against the real 100-image dataset. The real run needs `config.EPOCHS` back at its full value (currently `100`, was temporarily set to `2` for the fixture test) and `DATASET_YAML_PATH` in `train_yolo.py` switched to `config.DATASET_YAML`. On this CPU-only laptop, 2 epochs over the 70-image fixture train split took ~1.5 min each — budget accordingly for a real 100-epoch run (could be hours).
 
-`config.AUTO_LABELING_LIMIT` is currently `None` (set for the real full run), but `data/labels_auto/`/`data/labels_check/` only have output for 6 images so far (`husky_000`-`004` and `husky_064`, non-contiguous) — the full 100-image run hasn't actually been executed yet. Don't assume all 100 are labeled without checking.
+`config.AUTO_LABELING_LIMIT` is `None` (real full run). **Fase 1 is done for real**: all 100 images in `data/raw/` have been labeled (`data/labels_auto/*.txt` + `data/labels_check/*.jpg`), run on Kaggle (2× T4) with `QWEN_LABELER = QWEN_MODELS["4b"]`, `DEVICE`/`DTYPE` set to `"cuda"`/`"float16"` for that session (not reflected in this repo's `config.py`, which still defaults to `"0.8b"`/`"cpu"` for local runs — see Runtime environment below). `src/split_dataset.py` has also been run for real (not just the fixture): `data/train/` and `data/test/` are populated (70/30) and `dataset.yaml` has real content — `split_dataset.py`'s active path block now points to the real `config.*` paths, fixture block commented out.
 
 `config.py`'s `PROMPT_LABELING` was switched to a longer, stricter version (explicitly asks for ALL dogs, tight boxes, no guessing occluded parts, no markdown fences) after observing the shorter original sometimes stopped at the first dog or wandered in output format. The short original is kept commented above it for reference (prompt-sensitivity evidence for the assignment questionnaire).
 
@@ -38,13 +38,13 @@ The assignment PDF's example code uses `"Qwen/Qwen3.5-4B-VL"`-style IDs and `Aut
 
 The intended pipeline runs in phases, each corresponding to a module in `src/`:
 
-1. **Rename** (`src/rename_images.py`, implemented) — normalizes raw images in `data/raw/` to `husky_000.jpg ... husky_099.jpg`, then downscales any image over `config.MAX_IMAGE_DIM` (1280px, longest side, aspect preserved) in place. Must run **before** auto-labeling, since re-running the rename part after labels exist breaks the image↔label pairing (it does a two-pass rename through temp names to avoid collisions) — the resize pass alone is idempotent/safe to re-run anytime.
+1. **Rename** (`src/rename_and_resize_images.py`, implemented) — normalizes raw images in `data/raw/` to `husky_000.jpg ... husky_099.jpg`, then downscales any image over `config.MAX_IMAGE_DIM` (1280px, longest side, aspect preserved) in place. Must run **before** auto-labeling, since re-running the rename part after labels exist breaks the image↔label pairing (it does a two-pass rename through temp names to avoid collisions) — the resize pass alone is idempotent/safe to re-run anytime.
 2. **Auto-labeling** (`src/auto_labeling.py`, implemented, orchestrator only) — Phase 1: loops over `data/raw/` (up to `config.AUTO_LABELING_LIMIT` images), asks Qwen (`config.QWEN_LABELER`) for boxes via `PROMPT_LABELING`, writes YOLO-format `.txt` to `data/labels_auto/`, and saves a drawn-box visualization of each image to `data/labels_check/` for manual QA. Model loading, inference, response parsing, and YOLO-format conversion live in `src/utils.py` (see below); `auto_labeling.py` just calls into it.
 3. **Training** (`src/train_yolo.py`, implemented) — Phase 2: fine-tunes a YOLOv8 model (`YOLO_BASE`) using the hyperparameters in `config.py` (`EPOCHS`, `IMG_SIZE`, `BATCH`, `PATIENCE`, `SEED`, `AUGMENT`), on whichever `dataset.yaml` `DATASET_YAML_PATH` (top of the file) points to. Preceded by `src/split_dataset.py` (implemented, separate script — see design note below), which turns `data/raw/` + `data/labels_auto/` into `data/train/`+`data/test/` and `dataset.yaml`.
 4. **Hybrid inference** (`src/hybrid_inference.py`, stub) — Phases 3-4: runs YOLO detection (`YOLODetector` in `src/utils.py`) then validates crops with a cascade of small Qwen VLMs (`QWEN_VALIDATORS` in `config.py`) using `PROMPT_VALIDATION`. Per the no-CLI-args convention, which validator size(s) to run should be a `config.py` variable, not a `--validator` flag (the assignment PDF's example suggests a CLI flag, but that contradicts this project's convention — see note above).
 5. **Metrics** (`src/metrics.py`, stub) — computes mAP, FP/FN, latency, and P-R curves into `results/metrics/` and `results/figures/`.
 
-All shared configuration — paths, model IDs, prompts, thresholds, hyperparameters — lives centrally in `config.py`. New scripts should import it (`import config`) rather than hardcoding paths or constants. Scripts run from the repo root add the parent dir to `sys.path` to import `config` (see `src/rename_images.py`).
+All shared configuration — paths, model IDs, prompts, thresholds, hyperparameters — lives centrally in `config.py`. New scripts should import it (`import config`) rather than hardcoding paths or constants. Scripts run from the repo root add the parent dir to `sys.path` to import `config` (see `src/rename_and_resize_images.py`).
 
 ### `src/utils.py` design
 
@@ -61,7 +61,7 @@ Qwen section:
 
 **`del`/`empty_cache()` in `ask()` — kept, but wasn't the real fix:** originally suspected CUDA memory fragmentation from many `ask()` calls in a loop (added `del inputs, output_ids` + `torch.cuda.empty_cache()` after decoding). Re-ran on Kaggle and it crashed at the **exact same image, same box counts** as before — proved it wasn't fragmentation (the error's "allocated by PyTorch" was ~13.7GB, genuinely in use, not reclaimable cache) and that the fix was a no-op for this bug. The `del`/`empty_cache()` call is harmless and stays, but see below for the actual cause.
 
-**Real cause of the OOM: a few source images are enormous.** Some of the 100 raw images are up to 5616×3744px. Qwen's vision encoder turns image pixels into "visual tokens," and self-attention cost scales quadratically with token count — an oversized image can make a single `generate()` prefill call try to allocate 10+GB in one shot (confirmed: `"Tried to allocate 12.79 GiB"` crashing exactly on `husky_029.jpg`, 4700×3135px, in `_prefill`, i.e. *before* any generation even starts). Not a leak, not fragmentation — just one huge image blowing the budget on a GPU that's already mostly full of model weights. Fixed at the source: `config.MAX_IMAGE_DIM = 1280` + `rename_images.py` now has a 3rd pass (`redimensionar_si_necesario`) that downscales (never upscales) any image over that limit, saving in place before Fase 1 ever runs. 20 of the 100 raw images needed resizing (`data/raw/` went 56MB → 37MB). This must be re-run (`python src/rename_images.py`) on any fresh checkout of the images if it hasn't been already — check by re-running it; it's a no-op (0 resized) if already done.
+**Real cause of the OOM: a few source images are enormous.** Some of the 100 raw images are up to 5616×3744px. Qwen's vision encoder turns image pixels into "visual tokens," and self-attention cost scales quadratically with token count — an oversized image can make a single `generate()` prefill call try to allocate 10+GB in one shot (confirmed: `"Tried to allocate 12.79 GiB"` crashing exactly on `husky_029.jpg`, 4700×3135px, in `_prefill`, i.e. *before* any generation even starts). Not a leak, not fragmentation — just one huge image blowing the budget on a GPU that's already mostly full of model weights. Fixed at the source: `config.MAX_IMAGE_DIM = 1280` + `rename_and_resize_images.py` now has a 3rd pass (`redimensionar_si_necesario`) that downscales (never upscales) any image over that limit, saving in place before Fase 1 ever runs. 20 of the 100 raw images needed resizing (`data/raw/` went 56MB → 37MB). This must be re-run (`python src/rename_and_resize_images.py`) on any fresh checkout of the images if it hasn't been already — check by re-running it; it's a no-op (0 resized) if already done.
 
 YOLO section:
 - `YOLODetector` class — `__init__(model_path=config.YOLO_TRAINED)`, `load()` (wraps `ultralytics.YOLO`), `detect(image) -> list[dict]` (runs inference with `config.CONF_THRESHOLD`/`IOU_THRESHOLD`, returns `{"box": (x1,y1,x2,y2) in pixels, "conf": float, "class_id": int}` per detection), `crop(image, box, padding=config.CROP_PADDING) -> Image` (crops a detection with margin, clamped to image bounds, for feeding into the Qwen validator in Fase 4).
@@ -69,14 +69,14 @@ YOLO section:
 
 ### `src/split_dataset.py` design
 
-Prep step before Fase 2 (`train_yolo.py`), kept as a separate script rather than folded into training — same reasoning as `rename_images.py` being separate from `auto_labeling.py`: it's a one-time (or occasional) data-prep operation, not something that should re-run every time you train.
+Prep step before Fase 2 (`train_yolo.py`), kept as a separate script rather than folded into training — same reasoning as `rename_and_resize_images.py` being separate from `auto_labeling.py`: it's a one-time (or occasional) data-prep operation, not something that should re-run every time you train.
 
 - `listar_pares(images_dir, labels_dir)` — pairs each image with its `.txt` by matching basename, skips (with a warning) any image missing a label.
 - `dividir(pares, train_ratio, seed)` — shuffles with a fixed seed and splits by ratio. Deliberately isolated from the copy/write logic so it's the one place to change if a different splitting strategy is ever needed (e.g. k-fold) — **not implemented**, was explicitly scoped out as over-engineering for what the assignment asks (a single fixed 70/30 split).
 - `copiar_pares(pares, dest_dir)` — copies into the `images/`+`labels/` structure Ultralytics expects (it discovers labels by string-replacing `images`→`labels` in the path, so this exact layout matters).
 - `escribir_dataset_yaml(...)` — writes the Ultralytics-format `dataset.yaml` (`path`/`train`/`val`/`names`).
 - `verificar_dataset_yaml(...)` — calls `ultralytics.data.utils.check_det_dataset()` on the generated yaml as a real validation (not just "the file was written"), catching structural problems before a training run would hit them.
-- All source/dest paths and `DEST_YAML_PATH` are variables at the top of the file (no CLI args), defaulting to the **fixture** paths (see below) with the real `config.RAW_DIR`/`config.LABELS_AUTO_DIR`/`config.TRAIN_DIR`/`config.TEST_DIR`/`config.DATASET_YAML` commented out alongside — swap which block is active before running for real.
+- All source/dest paths and `DEST_YAML_PATH` are variables at the top of the file (no CLI args); the real `config.RAW_DIR`/`config.LABELS_AUTO_DIR`/`config.TRAIN_DIR`/`config.TEST_DIR`/`config.DATASET_YAML` block is currently **active** (the fixture block is commented out alongside it) — this has already been run for real (see Project status above). Swap back to the fixture block if testing a change to this script again.
 
 ### `src/train_yolo.py` design
 
@@ -126,9 +126,9 @@ The train/test split ratio (`TRAIN_RATIO = 0.7`) and reproducibility seed (`SEED
 Run with `conda run -n tarea3 python src/<script>.py` (or `conda activate tarea3` first) — see Runtime environment above.
 
 ```bash
-python src/rename_images.py
+python src/rename_and_resize_images.py
 ```
-Renames all images in `data/raw/` to the `husky_NNN.ext` scheme. Run once, before any labeling step.
+Renames all images in `data/raw/` to the `husky_NNN.ext` scheme, then downscales any over `config.MAX_IMAGE_DIM`. Run once, before any labeling step.
 
 ```bash
 python src/auto_labeling.py
