@@ -28,10 +28,10 @@ sys.path.append(str(Path(__file__).parent.parent))
 import config
 
 # ---------- Parámetros (editar aquí a mano) ----------
-DATASET_YAML_PATH = config.DATASET_YAML_FIXTURE
+#DATASET_YAML_PATH = config.DATASET_YAML_FIXTURE
 
 # Dataset real, para cuando ya se haya probado con el fixture:
-# DATASET_YAML_PATH = config.DATASET_YAML
+DATASET_YAML_PATH = config.DATASET_YAML
 
 
 def main():

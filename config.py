@@ -39,8 +39,7 @@ IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
 # rename_images.py también redimensiona las imágenes que excedan esto (en su
 # lado más grande, manteniendo aspecto, nunca agranda). Algunas imágenes de
 # data/raw/ son enormes y hacían que Qwen intentara reservar >10GB de golpe en
-# una sola llamada de atención (escala cuadráticamente con los tokens visuales,
-# y una imagen de resolución muy alta genera muchísimos). Ver CLAUDE.md.
+# una sola llamada de atención. Ver CLAUDE.md.
 MAX_IMAGE_DIM = 1280
 
 # Tamaños de Qwen3.5 disponibles (mismos repos para etiquetador y validadores).
@@ -57,8 +56,8 @@ QWEN_MODELS = {
 # según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
 QWEN_LABELER = QWEN_MODELS["0.8b"]
-#QWEN_LABELER = QWEN_MODELS["4b"]
-# QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="cuda" abajo), no en esta laptop
+# QWEN_LABELER = QWEN_MODELS["4b"]
+# QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="auto" abajo), no en esta laptop
 
 # Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
 QWEN_VALIDATORS = QWEN_MODELS
@@ -76,6 +75,7 @@ YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
 DEVICE = "cpu"
+# DEVICE = "auto"
 #DEVICE = "cuda"
 DTYPE  = "float32"
 
@@ -119,7 +119,8 @@ PROMPT_VALIDATION = (
 )
 
 # ---------- Hiperparámetros ----------
-# Aún no se usan, pero se dejan aquí para referencia futura (entrenamiento YOLOv8).
+# Estos parámetros se pueden obtener de la página oficial de ultralytics.
+# https://docs.ultralytics.com/modes/train
 
 # Entrenamiento
 EPOCHS     = 100
