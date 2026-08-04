@@ -77,32 +77,35 @@ DTYPE  = "float32"
 # Nota: se probó pedir [ymin, xmin, ymax, xmax] explícitamente y Qwen3.5 lo ignoraba,
 # respondiendo siempre con su formato nativo "bbox_2d": [x1, y1, x2, y2]. Orden
 # confirmado visualmente en data/labels_check/test_orden_*.jpg. Por eso el prompt
-# ahora pide directamente ese formato nativo en vez de pelear contra él.
+# pide directamente ese formato nativo en vez de pelear contra él.
+#
+# Prompt corto (primera versión, usado para las pruebas iniciales de Fase 1):
+# PROMPT_LABELING = (
+#     "Detect all husky dogs in this image. "
+#     "Return a JSON list of objects, each with a \"bbox_2d\" key: "
+#     "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
+#     "Return only the JSON, no explanation."
+# )
+#
+# Prompt activo: más descriptivo/estricto (pide TODAS las instancias, cajas
+# ajustadas sin adivinar partes ocultas, sin fences de markdown).
 PROMPT_LABELING = (
-    "Detect all husky dogs in this image. "
-    "Return a JSON list of objects, each with a \"bbox_2d\" key: "
-    "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
-    "Return only the JSON, no explanation."
+    "Locate every single husky dog visible in this image, even if there "
+    "are several of them. Do not stop after the first one -- include ALL "
+    "husky dogs you can see as separate entries in the array. "
+    "Output ONLY a JSON array, no explanation, no markdown fences, "
+    "no bold/asterisks, in this exact format: "
+    '[{"bbox_2d": [x1, y1, x2, y2], "label": "husky dog"}, ...] '
+    "where coordinates are normalized to a 0-1000 scale relative to the "
+    "image width and height, (x1, y1) is the top-left corner and "
+    "(x2, y2) is the bottom-right corner. "
+    "Each box must be a TIGHT bounding box around only the VISIBLE part of "
+    "each dog's body. If a dog is partially occluded by another dog, an "
+    "object, or the edge of the image, draw the box only around the "
+    "visible pixels of that dog -- do NOT guess or extend the box to cover "
+    "body parts that are hidden or not visible in the image. "
+    "If no husky dog is visible, output []."
 )
-"""
-PROMPT_LABELING = (
-   "Locate every single husky dog visible in this image, even if there "
-    "are several of them. Do not stop after the first one -- include ALL "
-    "husky dogs you can see as separate entries in the array. "
-    "Output ONLY a JSON array, no explanation, no markdown fences, "
-    "no bold/asterisks, in this exact format: "
-    '[{"bbox_2d": [x1, y1, x2, y2], "label": "husky dog"}, ...] '
-    "where coordinates are normalized to a 0-1000 scale relative to the "
-    "image width and height, (x1, y1) is the top-left corner and "
-    "(x2, y2) is the bottom-right corner. "
-    "Each box must be a TIGHT bounding box around only the VISIBLE part of "
-    "each dog's body. If a dog is partially occluded by another dog, an "
-    "object, or the edge of the image, draw the box only around the "
-    "visible pixels of that dog -- do NOT guess or extend the box to cover "
-    "body parts that are hidden or not visible in the image. "
-    "If no husky dog is visible, output [].
-)
-"""
 
 PROMPT_VALIDATION = (
     "Is this a husky dog inside this image crop? Answer only Yes or No."
