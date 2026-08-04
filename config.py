@@ -49,8 +49,9 @@ QWEN_MODELS = {
 # Fase 1 (auto_labeling.py): qué tamaño usar como etiquetador. Cambiar aquí a mano
 # según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
-QWEN_LABELER = QWEN_MODELS["0.8b"]
-#QWEN_LABELER = QWEN_MODELS["4b"]
+# QWEN_LABELER = QWEN_MODELS["0.8b"]
+QWEN_LABELER = QWEN_MODELS["2b"]
+# QWEN_LABELER = QWEN_MODELS["4b"]
 # QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="cuda" abajo), no en esta laptop
 
 # Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
@@ -68,9 +69,10 @@ YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
 # Sin GPU NVIDIA disponible en esta laptop (solo AMD integrada) -> CPU.
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
-DEVICE = "cpu"
-#DEVICE = "cuda"
-DTYPE  = "float32"
+#DEVICE = "cpu"
+#DTYPE  = "float32"
+DEVICE = "cuda"
+DTYPE  = "float16"
 
 
 # ---------- Prompts (versionados: evidencia para la pregunta 4) ----------
