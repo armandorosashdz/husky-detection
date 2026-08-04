@@ -78,7 +78,7 @@ YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
 DEVICE = "cpu"
-# DEVICE = "auto"
+#DEVICE = "auto"
 #DEVICE = "cuda"
 DTYPE  = "float32"
 
