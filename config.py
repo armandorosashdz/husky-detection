@@ -72,7 +72,18 @@ AUTO_LABELING_LIMIT = None
 #AUTO_LABELING_LIMIT = 5
 
 YOLO_BASE    = "yolov8s.pt"          # pesos preentrenados de Ultralytics
-YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
+
+# Carpeta de salida "de trabajo" de Ultralytics durante el entrenamiento (se
+# regenera cada corrida, gitignored -- ver train_yolo.py). Separado de
+# YOLO_TRAINED porque ahora ese vive en models/, que no sigue la estructura
+# <project>/<name>/weights/ que arma Ultralytics.
+YOLO_RUNS_DIR = ROOT / "runs" / "detect"
+YOLO_RUN_NAME = "train"
+
+# Modelo "activo" que usa el resto del pipeline (YOLODetector, hybrid_inference.py).
+# train_yolo.py copia aquí el best.pt de la corrida al terminar. Vive en models/,
+# que sí se comitea (excepción en .gitignore) a diferencia de runs/.
+YOLO_TRAINED = ROOT / "models" / "yolov8_finetuned_armando.pt"
 
 # Sin GPU NVIDIA disponible en esta laptop (solo AMD integrada) -> CPU.
 # float16 no está bien soportado para generación en CPU, por eso float32.
