@@ -100,7 +100,7 @@ def procesar_imagen_pedro(vlm: QwenVLM, imagen_path: Path) -> tuple[int, int]:
 def main():
     imagenes = listar_imagenes()
     if not imagenes:
-        sys.exit(f"No se encontraron imágenes en {config.RAW_DIR}")
+        sys.exit(f"No se encontraron imágenes en {config.RAW_PEDRO_DIR}")
     if config.AUTO_LABELING_LIMIT is not None:
         imagenes = imagenes[:config.AUTO_LABELING_LIMIT]
 

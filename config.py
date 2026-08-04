@@ -7,6 +7,7 @@ ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 
 RAW_DIR         = DATA / "raw"
+RAW_PEDRO_DIR         = DATA / "raw_pedro"
 LABELS_AUTO_DIR = DATA / "labels_auto"
 LABELS_CHECK_DIR= DATA / "labels_check"
 TRAIN_DIR       = DATA / "train"
