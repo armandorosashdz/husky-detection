@@ -11,10 +11,12 @@ LABELS_AUTO_DIR = DATA / "labels_auto"
 LABELS_CHECK_DIR= DATA / "labels_check"
 TRAIN_DIR       = DATA / "train"
 TEST_DIR        = DATA / "test"
+VALIDATION_DIR        = DATA / "validation"
 
 RESULTS   = ROOT / "results"
 METRICS_DIR = RESULTS / "metrics"
 FIGURES_DIR = RESULTS / "figures"
+MODELS_DIR  = RESULTS / "models"
 
 DATASET_YAML = ROOT / "dataset.yaml"
 
@@ -36,6 +38,12 @@ CLASS_NAME = "husky"
 IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 IMG_PREFIX     = CLASS_NAME   # husky_001.jpg, husky_002.jpg, ...
 
+# rename_images.py también redimensiona las imágenes que excedan esto (en su
+# lado más grande, manteniendo aspecto, nunca agranda). Algunas imágenes de
+# data/raw/ son enormes y hacían que Qwen intentara reservar >10GB de golpe en
+# una sola llamada de atención. Ver CLAUDE.md.
+MAX_IMAGE_DIM = 1280
+
 # Tamaños de Qwen3.5 disponibles (mismos repos para etiquetador y validadores).
 # Nota: Qwen3.5 es nativamente multimodal, los repos de HF NO llevan sufijo "-VL"
 # (a diferencia de Qwen2.5-VL). Verificado en huggingface.co/Qwen/Qwen3.5-4B.
@@ -49,10 +57,17 @@ QWEN_MODELS = {
 # Fase 1 (auto_labeling.py): qué tamaño usar como etiquetador. Cambiar aquí a mano
 # según la máquina: en esta laptop (sin GPU, RAM limitada) solo "0.8b" corre sin
 # quedarse sin memoria; la tarea pide 2b o 4b en una máquina con GPU real.
+<<<<<<< HEAD
 # QWEN_LABELER = QWEN_MODELS["0.8b"]
 QWEN_LABELER = QWEN_MODELS["2b"]
 # QWEN_LABELER = QWEN_MODELS["4b"]
 # QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="cuda" abajo), no en esta laptop
+=======
+QWEN_LABELER = QWEN_MODELS["0.8b"]
+# QWEN_LABELER = QWEN_MODELS["2b"]
+# QWEN_LABELER = QWEN_MODELS["4b"]
+# QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="auto" abajo), no en esta laptop
+>>>>>>> Armando
 
 # Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
 QWEN_VALIDATORS = QWEN_MODELS
@@ -64,54 +79,76 @@ AUTO_LABELING_LIMIT = None
 #AUTO_LABELING_LIMIT = 5
 
 YOLO_BASE    = "yolov8s.pt"          # pesos preentrenados de Ultralytics
-YOLO_TRAINED = ROOT / "runs/detect/train/weights/best.pt"
+
+# Carpeta de salida "de trabajo" de Ultralytics durante el entrenamiento (se
+# regenera cada corrida, gitignored -- ver train_yolo.py). Separado de
+# YOLO_TRAINED porque ahora ese vive en models/, que no sigue la estructura
+# <project>/<name>/weights/ que arma Ultralytics.
+YOLO_RUNS_DIR = ROOT / "runs" / "detect"
+YOLO_RUN_NAME = "train"
+
+# Modelo "activo" que usa el resto del pipeline (YOLODetector, hybrid_inference.py).
+# train_yolo.py copia aquí el best.pt de la corrida al terminar. Vive en models/,
+# que sí se comitea (excepción en .gitignore) a diferencia de runs/.
+YOLO_TRAINED = ROOT / "models" / "yolov8_finetuned_armando.pt"
 
 # Sin GPU NVIDIA disponible en esta laptop (solo AMD integrada) -> CPU.
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
+<<<<<<< HEAD
 #DEVICE = "cpu"
 #DTYPE  = "float32"
 DEVICE = "cuda"
 DTYPE  = "float16"
+=======
+DEVICE = "cpu"
+#DEVICE = "auto"
+#DEVICE = "cuda"
+DTYPE  = "float32"
+>>>>>>> Armando
 
 
 # ---------- Prompts (versionados: evidencia para la pregunta 4) ----------
 # Nota: se probó pedir [ymin, xmin, ymax, xmax] explícitamente y Qwen3.5 lo ignoraba,
 # respondiendo siempre con su formato nativo "bbox_2d": [x1, y1, x2, y2]. Orden
 # confirmado visualmente en data/labels_check/test_orden_*.jpg. Por eso el prompt
-# ahora pide directamente ese formato nativo en vez de pelear contra él.
+# pide directamente ese formato nativo en vez de pelear contra él.
+#
+# Prompt corto (primera versión, usado para las pruebas iniciales de Fase 1):
+# PROMPT_LABELING = (
+#     "Detect all husky dogs in this image. "
+#     "Return a JSON list of objects, each with a \"bbox_2d\" key: "
+#     "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
+#     "Return only the JSON, no explanation."
+# )
+#
+# Prompt activo: más descriptivo/estricto (pide TODAS las instancias, cajas
+# ajustadas sin adivinar partes ocultas, sin fences de markdown).
 PROMPT_LABELING = (
-    "Detect all husky dogs in this image. "
-    "Return a JSON list of objects, each with a \"bbox_2d\" key: "
-    "[x1, y1, x2, y2] (top-left and bottom-right corners) in a 0-1000 scale. "
-    "Return only the JSON, no explanation."
+    "Locate every single husky dog visible in this image, even if there "
+    "are several of them. Do not stop after the first one -- include ALL "
+    "husky dogs you can see as separate entries in the array. "
+    "Output ONLY a JSON array, no explanation, no markdown fences, "
+    "no bold/asterisks, in this exact format: "
+    '[{"bbox_2d": [x1, y1, x2, y2], "label": "husky dog"}, ...] '
+    "where coordinates are normalized to a 0-1000 scale relative to the "
+    "image width and height, (x1, y1) is the top-left corner and "
+    "(x2, y2) is the bottom-right corner. "
+    "Each box must be a TIGHT bounding box around only the VISIBLE part of "
+    "each dog's body. If a dog is partially occluded by another dog, an "
+    "object, or the edge of the image, draw the box only around the "
+    "visible pixels of that dog -- do NOT guess or extend the box to cover "
+    "body parts that are hidden or not visible in the image. "
+    "If no husky dog is visible, output []."
 )
-"""
-PROMPT_LABELING = (
-   "Locate every single husky dog visible in this image, even if there "
-    "are several of them. Do not stop after the first one -- include ALL "
-    "husky dogs you can see as separate entries in the array. "
-    "Output ONLY a JSON array, no explanation, no markdown fences, "
-    "no bold/asterisks, in this exact format: "
-    '[{"bbox_2d": [x1, y1, x2, y2], "label": "husky dog"}, ...] '
-    "where coordinates are normalized to a 0-1000 scale relative to the "
-    "image width and height, (x1, y1) is the top-left corner and "
-    "(x2, y2) is the bottom-right corner. "
-    "Each box must be a TIGHT bounding box around only the VISIBLE part of "
-    "each dog's body. If a dog is partially occluded by another dog, an "
-    "object, or the edge of the image, draw the box only around the "
-    "visible pixels of that dog -- do NOT guess or extend the box to cover "
-    "body parts that are hidden or not visible in the image. "
-    "If no husky dog is visible, output [].
-)
-"""
 
 PROMPT_VALIDATION = (
     "Is this a husky dog inside this image crop? Answer only Yes or No."
 )
 
 # ---------- Hiperparámetros ----------
-# Aún no se usan, pero se dejan aquí para referencia futura (entrenamiento YOLOv8).
+# Estos parámetros se pueden obtener de la página oficial de ultralytics.
+# https://docs.ultralytics.com/modes/train
 
 # Entrenamiento
 EPOCHS     = 100
@@ -119,6 +156,16 @@ IMG_SIZE   = 640
 BATCH      = 8
 PATIENCE   = 20
 SEED       = 42          # también controla el split 70/30
+
+# Con optimizer="auto" (default de Ultralytics), cls_loss explotó (3.5 -> 18 -> 36)
+# a partir de la época 3 y el entrenamiento nunca se recuperó (70 imágenes, solo
+# 9 batches/época, LR elegido automáticamente demasiado agresivo para eso). Se fija
+# el optimizador explícito para que LR0 realmente se use (con "auto", Ultralytics
+# ignora el LR0 que le pases). FREEZE congela las primeras 10 capas (el backbone,
+# capas 0-9 del resumen del modelo) -- transfer learning más estable con pocos datos.
+OPTIMIZER  = "AdamW"
+LR0        = 0.001       # la mitad del que "auto" eligió (0.002) y explotó
+FREEZE     = 10
 
 # Augmentación (bajo volumen de datos → agresiva)
 AUGMENT = {

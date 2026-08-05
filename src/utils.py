@@ -36,10 +36,22 @@ class QwenVLM:
     def load(self):
         """Carga el processor y el modelo. Debe llamarse antes de ask()."""
         self.processor = AutoProcessor.from_pretrained(self.model_id)
+
+        # "auto" deja que accelerate reparta las capas del modelo entre todas las
+        # GPUs visibles (útil en máquinas multi-GPU como Kaggle T4x2, para modelos
+        # que no caben en float32 en una sola tarjeta). PERO solo se usa si hay
+        # CUDA disponible: en esta laptop (sin GPU) "auto" hizo que accelerate
+        # ofreciera "offload a disco" incluso para el modelo 0.8B (mensaje
+        # "parameters are on the meta device... offloaded to the cpu and disk"),
+        # generando E/S de disco pesada y riesgo real de tumbar la máquina (ver
+        # CLAUDE.md). Sin GPU, se fuerza config.DEVICE ("cpu") explícito, tal
+        # como funcionaba antes de agregar el soporte multi-GPU.
+        device_map = "auto" if torch.cuda.is_available() else config.DEVICE
+
         self.model = AutoModelForMultimodalLM.from_pretrained(
             self.model_id,
             dtype=getattr(torch, config.DTYPE),
-            device_map=config.DEVICE,
+            device_map=device_map,
         )
         return self
 
@@ -51,6 +63,11 @@ class QwenVLM:
 
         Sigue el patrón de uso oficial de la tarjeta del modelo en Hugging Face
         (huggingface.co/Qwen/Qwen3.5-0.8B).
+
+        enable_thinking=False: Qwen3.5 (sobre todo el 4B y 9B) genera por defecto
+        un bloque de razonamiento <think>...</think> antes de la respuesta final.
+        No lo necesitamos para detección de cajas ni para el Yes/No de validación,
+        y consumía max_new_tokens sin llegar a la respuesta real. Ver CLAUDE.md.
         """
         if self.model is None or self.processor is None:
             raise RuntimeError("Modelo no cargado. Llama a load() antes de ask().")
@@ -71,6 +88,7 @@ class QwenVLM:
             tokenize=True,
             return_dict=True,
             return_tensors="pt",
+            enable_thinking=False,
         ).to(self.model.device)
 
         with torch.no_grad():
@@ -79,6 +97,15 @@ class QwenVLM:
         response = self.processor.decode(
             output_ids[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True
         )
+
+        # Cada imagen trae una resolución distinta -> cada llamada reserva tensores
+        # de tamaño distinto en CUDA (input, KV-cache). Sin liberar explícitamente,
+        # la memoria se fragmenta con cada llamada nueva y en un loop de muchas
+        # imágenes (ej. auto_labeling.py sobre las 100) termina en OutOfMemoryError
+        # aunque cada llamada individual quepa de sobra. No afecta a CPU.
+        del inputs, output_ids
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         return response.strip()
 
@@ -97,7 +124,14 @@ def parse_boxes(response: str) -> list[list[float]]:
     Orden [x1, y1, x2, y2] confirmado visualmente dibujando las cajas sobre 3
     imágenes de prueba: ver data/labels_check/test_orden_*.jpg (generadas por
     src/test_box_order.py).
+
+    Quita primero cualquier bloque <think>...</think>: aunque QwenVLM.ask() ya
+    pide enable_thinking=False, algunos tamaños (ej. 0.8B) pueden entrar en modo
+    thinking de todos modos; sin esto, corchetes dentro del razonamiento podrían
+    confundir el regex de abajo.
     """
+    response = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
+
     match = re.search(r"\[.*\]", response, re.DOTALL)
     if match is None:
         return []

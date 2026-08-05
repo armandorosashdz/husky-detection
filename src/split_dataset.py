@@ -24,18 +24,18 @@ sys.path.append(str(Path(__file__).parent.parent))
 import config
 
 # ---------- Parámetros (editar aquí a mano) ----------
-SOURCE_IMAGES_DIR = config.RAW_FIXTURE_DIR
-SOURCE_LABELS_DIR = config.LABELS_AUTO_FIXTURE_DIR
-DEST_TRAIN_DIR = config.TRAIN_FIXTURE_DIR
-DEST_TEST_DIR = config.TEST_FIXTURE_DIR
-DEST_YAML_PATH = config.DATASET_YAML_FIXTURE
+#SOURCE_IMAGES_DIR = config.RAW_FIXTURE_DIR
+#SOURCE_LABELS_DIR = config.LABELS_AUTO_FIXTURE_DIR
+#DEST_TRAIN_DIR = config.TRAIN_FIXTURE_DIR
+#DEST_TEST_DIR = config.TEST_FIXTURE_DIR
+#DEST_YAML_PATH = config.DATASET_YAML_FIXTURE
 
 # Rutas reales, para cuando ya se haya probado con el fixture:
-# SOURCE_IMAGES_DIR = config.RAW_DIR
-# SOURCE_LABELS_DIR = config.LABELS_AUTO_DIR
-# DEST_TRAIN_DIR = config.TRAIN_DIR
-# DEST_TEST_DIR = config.TEST_DIR
-# DEST_YAML_PATH = config.DATASET_YAML
+SOURCE_IMAGES_DIR = config.RAW_DIR
+SOURCE_LABELS_DIR = config.LABELS_AUTO_DIR
+DEST_TRAIN_DIR = config.TRAIN_DIR
+DEST_TEST_DIR = config.TEST_DIR
+DEST_YAML_PATH = config.DATASET_YAML
 
 TRAIN_RATIO = config.TRAIN_RATIO
 SEED = config.SEED
@@ -82,12 +82,21 @@ def copiar_pares(pares: list[tuple[Path, Path]], dest_dir: Path) -> None:
 
 def escribir_dataset_yaml(train_dir: Path, test_dir: Path, yaml_path: Path) -> None:
     """Escribe un dataset.yaml en el formato que espera Ultralytics: path raíz +
-    rutas relativas a las imágenes de train/val + el diccionario de clases."""
+    rutas relativas a las imágenes de train/val + el diccionario de clases.
+
+    "path" se escribe como "." (relativo al propio archivo .yaml, que Ultralytics
+    resuelve respecto a la carpeta donde vive el .yaml) en vez de una ruta absoluta.
+    Antes se escribía config.ROOT.as_posix(), una ruta absoluta de la máquina que
+    corrió split_dataset.py (ej. "c:/Users/Armando/...") -- funcionaba localmente
+    pero al comitear ese dataset.yaml y clonar en otra máquina (Kaggle, Linux) esa
+    ruta no existe y el entrenamiento no encontraba las imágenes. Asume que
+    yaml_path vive en config.ROOT (cierto para DATASET_YAML y DATASET_YAML_FIXTURE).
+    """
     train_rel = (train_dir / "images").relative_to(config.ROOT).as_posix()
     test_rel = (test_dir / "images").relative_to(config.ROOT).as_posix()
 
     contenido = (
-        f"path: {config.ROOT.as_posix()}\n"
+        f"path: .\n"
         f"train: {train_rel}\n"
         f"val: {test_rel}\n"
         f"names:\n"

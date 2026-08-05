@@ -233,3 +233,5 @@ dataset_fixture.yaml
 # Pesos de YOLO (preentrenados, descargados por Ultralytics) y resultados de entrenamiento
 *.pt
 runs/
+# Excepción: modelos finales del equipo, sí se comitean como entregable
+!models/*.pt

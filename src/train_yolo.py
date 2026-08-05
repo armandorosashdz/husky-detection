@@ -3,7 +3,7 @@ Fase 2: Transfer Learning (ajuste fino de YOLOv8s).
 
 Carga YOLOv8s preentrenado (config.YOLO_BASE) y lo afina sobre el dataset definido
 en DATASET_YAML_PATH (train/val), usando los hiperparámetros centralizados en
-config.py (EPOCHS, IMG_SIZE, BATCH, PATIENCE, SEED, AUGMENT).
+config.py (EPOCHS, IMG_SIZE, BATCH, PATIENCE, SEED, OPTIMIZER, LR0, FREEZE, AUGMENT).
 
 Nota de diseño (ver CLAUDE.md, "Fase 2 design decision"): se usa nc=1 (solo
 "husky"), lo que reinicializa la cabeza de detección y pierde las 80 clases de
@@ -20,6 +20,7 @@ Uso:
 """
 
 from pathlib import Path
+import shutil
 import sys
 
 from ultralytics import YOLO
@@ -28,10 +29,10 @@ sys.path.append(str(Path(__file__).parent.parent))
 import config
 
 # ---------- Parámetros (editar aquí a mano) ----------
-DATASET_YAML_PATH = config.DATASET_YAML_FIXTURE
+#DATASET_YAML_PATH = config.DATASET_YAML_FIXTURE
 
 # Dataset real, para cuando ya se haya probado con el fixture:
-# DATASET_YAML_PATH = config.DATASET_YAML
+DATASET_YAML_PATH = config.DATASET_YAML
 
 
 def main():
@@ -40,12 +41,6 @@ def main():
             f"No existe {DATASET_YAML_PATH}. Corre split_dataset.py primero "
             f"(con las rutas correspondientes)."
         )
-
-    # Ultralytics guarda los resultados en <project>/<name>/. Derivamos ambos de
-    # config.YOLO_TRAINED para que el resultado siempre caiga en la ruta que el
-    # resto del pipeline (utils.py) espera, sin ir acumulando train2/, train3/...
-    train_dir = config.YOLO_TRAINED.parent.parent
-    project_dir = train_dir.parent
 
     print(f"Cargando {config.YOLO_BASE} (preentrenado)...")
     model = YOLO(config.YOLO_BASE)
@@ -59,13 +54,23 @@ def main():
         patience=config.PATIENCE,
         seed=config.SEED,
         device=config.DEVICE,
-        project=str(project_dir),
-        name=train_dir.name,
+        optimizer=config.OPTIMIZER,
+        lr0=config.LR0,
+        freeze=config.FREEZE,
+        project=str(config.YOLO_RUNS_DIR),
+        name=config.YOLO_RUN_NAME,
         exist_ok=True,
         **config.AUGMENT,
     )
 
-    print(f"\nListo. Pesos guardados en {config.YOLO_TRAINED}")
+    # Ultralytics deja el resultado en YOLO_RUNS_DIR/YOLO_RUN_NAME/weights/best.pt
+    # (carpeta regenerable, gitignored). Lo copiamos al modelo "activo" del
+    # pipeline en models/, que sí se comitea.
+    pesos_entrenados = config.YOLO_RUNS_DIR / config.YOLO_RUN_NAME / "weights" / "best.pt"
+    config.YOLO_TRAINED.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(pesos_entrenados, config.YOLO_TRAINED)
+
+    print(f"\nListo. Pesos copiados a {config.YOLO_TRAINED}")
 
 
 if __name__ == "__main__":
