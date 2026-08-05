@@ -1,4 +1,4 @@
-"""Fase 3: despliegue del detector YOLOv8s ajustado.
+"""Fase 3: despliegue local del detector YOLOv8s ajustado.
 
 Procesa una imagen, una carpeta, un video o una cámara. Guarda detecciones,
 latencias, FPS y evidencias anotadas. La clase YOLOStreamDetector se reutiliza
@@ -27,7 +27,8 @@ import torch
 from ultralytics import YOLO
 
 
-ROOT = Path(__file__).resolve().parent.parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT = SCRIPT_DIR.parent if SCRIPT_DIR.name == "src" else SCRIPT_DIR
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"}
 
@@ -59,12 +60,13 @@ class FrameMetric:
 
 
 def discover_weights(models_dir: Path) -> Path:
-    """Encuentra un único best.pt; acepta otro .pt si no existe best.pt."""
+    """Prioriza los pesos ajustados del proyecto y evita selecciones ambiguas."""
     if not models_dir.exists():
         raise FileNotFoundError(f"No existe el directorio de modelos: {models_dir}")
 
+    preferred = sorted(models_dir.rglob("yolov8_finetuned_armando.pt"))
     best = sorted(models_dir.rglob("best.pt"))
-    candidates = best or sorted(models_dir.rglob("*.pt"))
+    candidates = preferred or best or sorted(models_dir.rglob("*.pt"))
 
     if not candidates:
         raise FileNotFoundError(f"No se encontraron pesos .pt en {models_dir}")
@@ -394,7 +396,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--weights",
         type=Path,
-        help="Pesos .pt. Si se omite, busca models/**/best.pt.",
+        help=(
+            "Pesos .pt. Si se omite, prioriza "
+            "models/**/yolov8_finetuned_armando.pt."
+        ),
     )
     parser.add_argument(
         "--source",
