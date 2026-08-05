@@ -20,6 +20,7 @@ Uso:
 """
 
 from pathlib import Path
+import shutil
 import sys
 
 from ultralytics import YOLO
@@ -41,12 +42,6 @@ def main():
             f"(con las rutas correspondientes)."
         )
 
-    # Ultralytics guarda los resultados en <project>/<name>/. Derivamos ambos de
-    # config.YOLO_TRAINED para que el resultado siempre caiga en la ruta que el
-    # resto del pipeline (utils.py) espera, sin ir acumulando train2/, train3/...
-    train_dir = config.YOLO_TRAINED.parent.parent
-    project_dir = train_dir.parent
-
     print(f"Cargando {config.YOLO_BASE} (preentrenado)...")
     model = YOLO(config.YOLO_BASE)
 
@@ -62,13 +57,20 @@ def main():
         optimizer=config.OPTIMIZER,
         lr0=config.LR0,
         freeze=config.FREEZE,
-        project=str(project_dir),
-        name=train_dir.name,
+        project=str(config.YOLO_RUNS_DIR),
+        name=config.YOLO_RUN_NAME,
         exist_ok=True,
         **config.AUGMENT,
     )
 
-    print(f"\nListo. Pesos guardados en {config.YOLO_TRAINED}")
+    # Ultralytics deja el resultado en YOLO_RUNS_DIR/YOLO_RUN_NAME/weights/best.pt
+    # (carpeta regenerable, gitignored). Lo copiamos al modelo "activo" del
+    # pipeline en models/, que sí se comitea.
+    pesos_entrenados = config.YOLO_RUNS_DIR / config.YOLO_RUN_NAME / "weights" / "best.pt"
+    config.YOLO_TRAINED.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(pesos_entrenados, config.YOLO_TRAINED)
+
+    print(f"\nListo. Pesos copiados a {config.YOLO_TRAINED}")
 
 
 if __name__ == "__main__":

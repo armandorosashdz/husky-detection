@@ -24,8 +24,8 @@ husky-detection/
 ├── yolov8s.pt                   # pesos preentrenados, descargados por Ultralytics al entrenar (gitignored)
 ├── runs/                        # resultados de entrenamiento de Ultralytics, incl. runs/detect/train/weights/best.pt (gitignored)
 ├── models/                      # modelos finales del equipo, sí se comitean (excepción a *.pt)
-│   ├── yolov8_finetuned_armando.pt
-│   └── yolov8_finetuned_pedro.pt
+│   ├── yolov8_finetuned_armando.pt   # = config.YOLO_TRAINED, el que usa el resto del pipeline
+│   └── yolov8_finetuned_pedro.pt     # modelo de comparación, no referenciado por ningún script
 ├── data/                        # sí está en el repo (incluyendo las 100 imágenes crudas)
 │   ├── raw/                     # 100 imágenes sin anotar (crudas, redimensionadas) + Dataset2.zip (respaldo)
 │   ├── labels_auto/             # .txt generados por Qwen (Fase 1 completa: 100/100)
