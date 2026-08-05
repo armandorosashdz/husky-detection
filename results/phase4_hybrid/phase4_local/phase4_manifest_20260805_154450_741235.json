@@ -1,0 +1,27 @@
+{
+  "session_id": "20260805_154450_741235",
+  "weights": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/models/yolov8_finetuned_armando.pt",
+  "weights_sha256": "7a1048f3ff89ed51e578deecdd978aee4f2df3183e5b5d48991588d96187f8cc",
+  "models": {
+    "qwen_0_8b": "Qwen/Qwen3.5-0.8B",
+    "qwen_2b": "Qwen/Qwen3.5-2B"
+  },
+  "prompt": "Inspect the animal visible in this image crop. Answer Yes only if the animal is a Siberian husky dog. Answer No if it is another dog breed, another animal, there is no animal, or the visual evidence is insufficient. Return exactly one word: Yes or No.",
+  "candidates": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/candidates/candidates.csv",
+  "validators": {
+    "qwen_0_8b": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/validators/qwen_0_8b.csv",
+    "qwen_2b": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/validators/qwen_2b.csv"
+  },
+  "validator_metadata": {
+    "qwen_0_8b": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/validators/qwen_0_8b_metadata.json",
+    "qwen_2b": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/validators/qwen_2b_metadata.json"
+  },
+  "comparison_csv": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/phase4_comparison.csv",
+  "comparison_json": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/phase4_comparison.json",
+  "pr_curves": [
+    "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/pr_yolov8s_solo.png",
+    "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/pr_yolov8s_plus_qwen_0_8b.png",
+    "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/pr_yolov8s_plus_qwen_2b.png",
+    "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/results/phase4_hybrid/phase4_local/metrics/pr_comparison.png"
+  ]
+}

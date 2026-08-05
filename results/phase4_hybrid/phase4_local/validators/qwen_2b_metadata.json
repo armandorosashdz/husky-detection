@@ -1,0 +1,6 @@
+{
+  "model_id": "Qwen/Qwen3.5-2B",
+  "prompt_sha256": "4761dc2ef287fe41799ddc5d6c4b82b29db162a9d4510e7dfe29c9cfaa38823d",
+  "max_new_tokens": 40,
+  "candidate_ids_sha256": "a3e6fe21bc83c88e82be481b367e7048ad9c4a5fbc99bd1e01dad8a0ad5691d7"
+}

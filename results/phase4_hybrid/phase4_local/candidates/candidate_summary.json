@@ -1,0 +1,166 @@
+{
+  "weights": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/models/yolov8_finetuned_armando.pt",
+  "images_count": 30,
+  "candidates": 87,
+  "generation_wall_s": 2.0676230550016044,
+  "signature": {
+    "weights_sha256": "7a1048f3ff89ed51e578deecdd978aee4f2df3183e5b5d48991588d96187f8cc",
+    "images": [
+      {
+        "name": "husky_000.jpg",
+        "size": 27221,
+        "mtime_ns": 1785894175532332741
+      },
+      {
+        "name": "husky_003.jpg",
+        "size": 32067,
+        "mtime_ns": 1785894175532457290
+      },
+      {
+        "name": "husky_004.jpg",
+        "size": 62937,
+        "mtime_ns": 1785894175532584249
+      },
+      {
+        "name": "husky_011.jpg",
+        "size": 42626,
+        "mtime_ns": 1785894175532676666
+      },
+      {
+        "name": "husky_013.jpg",
+        "size": 54454,
+        "mtime_ns": 1785894175532784490
+      },
+      {
+        "name": "husky_014.jpg",
+        "size": 48192,
+        "mtime_ns": 1785894175532840542
+      },
+      {
+        "name": "husky_017.jpg",
+        "size": 9553,
+        "mtime_ns": 1785894175533075204
+      },
+      {
+        "name": "husky_025.jpg",
+        "size": 73174,
+        "mtime_ns": 1785894175533294603
+      },
+      {
+        "name": "husky_027.jpg",
+        "size": 410514,
+        "mtime_ns": 1785894175533642509
+      },
+      {
+        "name": "husky_028.jpg",
+        "size": 227423,
+        "mtime_ns": 1785894175533843401
+      },
+      {
+        "name": "husky_029.jpg",
+        "size": 456762,
+        "mtime_ns": 1785894175534221402
+      },
+      {
+        "name": "husky_031.jpg",
+        "size": 26231,
+        "mtime_ns": 1785894175534296426
+      },
+      {
+        "name": "husky_035.jpg",
+        "size": 99786,
+        "mtime_ns": 1785894175534447203
+      },
+      {
+        "name": "husky_053.jpg",
+        "size": 240975,
+        "mtime_ns": 1785894175534674739
+      },
+      {
+        "name": "husky_054.jpg",
+        "size": 24908,
+        "mtime_ns": 1785894175534748605
+      },
+      {
+        "name": "husky_057.jpg",
+        "size": 73692,
+        "mtime_ns": 1785894175534840529
+      },
+      {
+        "name": "husky_064.jpg",
+        "size": 382736,
+        "mtime_ns": 1785894175535282499
+      },
+      {
+        "name": "husky_069.jpg",
+        "size": 11357,
+        "mtime_ns": 1785894175535366017
+      },
+      {
+        "name": "husky_071.jpg",
+        "size": 10605,
+        "mtime_ns": 1785894175535366017
+      },
+      {
+        "name": "husky_075.jpg",
+        "size": 13010,
+        "mtime_ns": 1785894175535366017
+      },
+      {
+        "name": "husky_077.jpg",
+        "size": 45411,
+        "mtime_ns": 1785894175535570108
+      },
+      {
+        "name": "husky_081.jpg",
+        "size": 7045,
+        "mtime_ns": 1785894175535570108
+      },
+      {
+        "name": "husky_084.jpg",
+        "size": 10081,
+        "mtime_ns": 1785894175535727471
+      },
+      {
+        "name": "husky_086.jpg",
+        "size": 10818,
+        "mtime_ns": 1785894175535781307
+      },
+      {
+        "name": "husky_088.jpg",
+        "size": 45943,
+        "mtime_ns": 1785894175535861205
+      },
+      {
+        "name": "husky_089.jpg",
+        "size": 9500,
+        "mtime_ns": 1785894175535937957
+      },
+      {
+        "name": "husky_093.jpg",
+        "size": 64758,
+        "mtime_ns": 1785894175535937957
+      },
+      {
+        "name": "husky_094.jpg",
+        "size": 126046,
+        "mtime_ns": 1785894175536172732
+      },
+      {
+        "name": "husky_095.jpg",
+        "size": 402259,
+        "mtime_ns": 1785894175536474265
+      },
+      {
+        "name": "husky_097.jpg",
+        "size": 311771,
+        "mtime_ns": 1785894175536731490
+      }
+    ],
+    "confidence_threshold": 0.15,
+    "nms_iou": 0.45,
+    "image_size": 640,
+    "crop_padding": 10,
+    "max_crop_side": 512
+  }
+}

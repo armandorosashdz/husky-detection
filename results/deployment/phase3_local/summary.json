@@ -1,0 +1,20 @@
+{
+  "weights": "models/yolov8_finetuned_armando.pt",
+  "source": "data/test/images",
+  "device": "0",
+  "half": true,
+  "classes": {
+    "0": "husky"
+  },
+  "confidence_threshold": 0.15,
+  "iou_threshold": 0.45,
+  "image_size": 640,
+  "frames": 30,
+  "detections": 87,
+  "mean_latency_ms": 56.893521267435666,
+  "min_latency_ms": 44.505216006655246,
+  "max_latency_ms": 193.0976090079639,
+  "inference_fps": 17.576693755680285,
+  "total_wall_s": 1.862863168003969,
+  "real_fps": 16.10424239164306
+}

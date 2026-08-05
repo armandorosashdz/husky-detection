@@ -1,0 +1,48 @@
+{
+  "session_id": "20260805_154450_741235",
+  "evaluation_iou": 0.5,
+  "candidate_confidence": 0.15,
+  "candidate_count": 87,
+  "ground_truth_count": 79,
+  "common_evaluator_results": [
+    {
+      "pipeline": "YOLOv8s solo",
+      "map50_common": 0.9630426081302426,
+      "precision_at_conf": 0.8850574712643678,
+      "recall_at_conf": 0.9746835443037974,
+      "f1_at_conf": 0.927710843373494,
+      "true_positives": 77,
+      "false_positives": 10,
+      "false_negatives": 2,
+      "accepted_predictions": 87,
+      "latency_ms_per_image": 68.92076850005348,
+      "real_fps": 14.50941453154609
+    },
+    {
+      "pipeline": "YOLOv8s + Qwen 0.8B",
+      "map50_common": 0.9555669912105553,
+      "precision_at_conf": 0.9047619047619048,
+      "recall_at_conf": 0.9620253164556962,
+      "f1_at_conf": 0.9325153374233128,
+      "true_positives": 76,
+      "false_positives": 8,
+      "false_negatives": 3,
+      "accepted_predictions": 84,
+      "latency_ms_per_image": 2962.739825201667,
+      "real_fps": 0.33752541869987934
+    },
+    {
+      "pipeline": "YOLOv8s + Qwen 2B",
+      "map50_common": 0.9656438273925845,
+      "precision_at_conf": 0.927710843373494,
+      "recall_at_conf": 0.9746835443037974,
+      "f1_at_conf": 0.9506172839506173,
+      "true_positives": 77,
+      "false_positives": 6,
+      "false_negatives": 2,
+      "accepted_predictions": 83,
+      "latency_ms_per_image": 8929.119545431846,
+      "real_fps": 0.11199312484416246
+    }
+  ]
+}
