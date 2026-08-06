@@ -15,6 +15,12 @@ pip install -r requirements.txt
 ```
 y reiniciar el kernel del notebook después (Kaggle no recarga los paquetes actualizados en la sesión activa). También ajustar `config.DEVICE`/`DTYPE` a `"cuda"`/`"float16"` antes de correr para aprovechar la GPU.
 
+**Atajo: correr todo de una vez**
+```bash
+python main.py
+```
+Ejecuta en orden los pasos 1, 2, 4 y 5 de abajo, y para el paso 6 corre automáticamente las 3 configuraciones que pide la tarea (`yolo_only`, `cascade+0.8B`, `cascade+2B`), editando `HYBRID_MODE`/`QWEN_VALIDATOR`/`RUN_LABEL` en `config.py` entre cada una y dejando `config.py` exactamente como estaba al terminar. `FUENTE_ACTIVA` (variable al inicio de `main.py`, `"raw"` por defecto, alternativa `"validation"`) es el único lugar que hay que tocar para correr todo esto sobre `data/validation/` en vez de `data/raw/` — automáticamente parcha `TARGET_DIR`/`INPUT_DIR`/`LABELS_AUTO_OUT`/`LABELS_CHECK_OUT`/`EVAL_DIR` en los scripts correspondientes (y con `"validation"` se saltan los pasos 4 y 5, que no aplican a un holdout). Se detiene en el primer paso que falle. No hace la pausa de revisión visual del paso 3 — si se corre así, esa revisión hay que hacerla aparte. El resto de esta sección explica cada paso por separado, útil para correrlos uno por uno o para entender qué hace `main.py` internamente.
+
 **1. Renombrar y redimensionar las imágenes crudas**
 ```bash
 python src/rename_and_resize_images.py
@@ -66,6 +72,7 @@ Lee la lista `RUN_JSONS` (nombres de archivo en `results/metrics/`, editable a m
 ```text
 husky-detection/
 ├── README.md                    # setup, cómo correr, quién hace qué
+├── main.py                      # corre el pipeline completo de un jalón (ver sección de arriba)
 ├── Especificaciones de Tarea 4...pdf   # enunciado original de la tarea
 ├── requirements.txt              # torch, torchvision, transformers, accelerate, ultralytics, pillow, matplotlib (`pip install -r requirements.txt`)
 ├── .gitignore                   # __pycache__, *.pt (excepto models/*.pt), data/*_fixture/, dataset_fixture.yaml

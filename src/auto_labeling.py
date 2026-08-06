@@ -24,13 +24,13 @@ from utils import QwenVLM, convert_to_yolo, parse_boxes
 # + labels_check/, un holdout que el entrenamiento nunca vio -- ver nota en
 # CLAUDE.md), comentar el bloque de abajo y descomentar el de validación. No
 # toca las rutas reales de Fase 1 en ningún caso.
-#INPUT_DIR = config.RAW_DIR
-#LABELS_AUTO_OUT = config.LABELS_AUTO_DIR
-#LABELS_CHECK_OUT = config.LABELS_CHECK_DIR
+INPUT_DIR = config.RAW_DIR
+LABELS_AUTO_OUT = config.LABELS_AUTO_DIR
+LABELS_CHECK_OUT = config.LABELS_CHECK_DIR
 
-INPUT_DIR = config.VALIDATION_IMAGES_DIR
-LABELS_AUTO_OUT = config.VALIDATION_LABELS_DIR
-LABELS_CHECK_OUT = config.VALIDATION_LABELS_CHECK_DIR
+#INPUT_DIR = config.VALIDATION_IMAGES_DIR
+#LABELS_AUTO_OUT = config.VALIDATION_LABELS_DIR
+#LABELS_CHECK_OUT = config.VALIDATION_LABELS_CHECK_DIR
 
 
 def es_imagen(path: Path) -> bool:

@@ -98,7 +98,7 @@ VALIDATION_MAX_NEW_TOKENS = 8
 # solo cambia cómo se llaman results/metrics/<esto>.json,
 # results/figures/<esto>/ y results/graphs/<esto>_pr_curve.png.
 # RUN_LABEL = None
-RUN_LABEL = "Yolov8s"
+RUN_LABEL = "Test"
 #RUN_LABEL = "Yolov8s_Qwen0_8b"  # ejemplo de cómo nombrar la corrida con los modelos usados
 #RUN_LABEL = "Yolov8s_Qwen2_0b"  # ejemplo de cómo nombrar la corrida con los modelos usados
 
@@ -125,10 +125,11 @@ YOLO_TRAINED = ROOT / "models" / "yolov8_finetuned_armando.pt"
 # Sin GPU NVIDIA disponible en esta laptop (solo AMD integrada) -> CPU.
 # float16 no está bien soportado para generación en CPU, por eso float32.
 # Cambiar a "cuda"/"float16" en una máquina con GPU NVIDIA.
-DEVICE = "cpu"
+#DEVICE = "cpu"
 #DEVICE = "auto"
-#DEVICE = "cuda"
-DTYPE  = "float32"
+DEVICE = "cuda"
+#DTYPE  = "float32"
+DTYPE  = "float16"
 
 
 # ---------- Prompts (versionados: evidencia para la pregunta 4) ----------
