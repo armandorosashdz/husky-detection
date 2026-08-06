@@ -54,8 +54,8 @@ ES_CASCADA = config.HYBRID_MODE == "cascade"
 # de abajo y descomentar la de validación -- requiere haber generado antes sus
 # pseudo-etiquetas con auto_labeling.py (ver su propio toggle INPUT_DIR).
 # Se espera el mismo layout images/+labels/ en ambos casos.
-EVAL_DIR = config.TEST_DIR
-# EVAL_DIR = config.VALIDATION_DIR
+#EVAL_DIR = config.TEST_DIR
+EVAL_DIR = config.VALIDATION_DIR
 
 
 @dataclass
