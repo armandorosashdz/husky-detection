@@ -230,11 +230,15 @@ data/train_fixture/
 data/test_fixture/
 dataset_fixture.yaml
 
-# Pesos de YOLO (preentrenados, descargados por Ultralytics) y resultados de entrenamiento
+# Pesos de YOLO (preentrenados, descargados por Ultralytics)
 *.pt
-runs/
 # Excepción: modelos finales del equipo, sí se comitean como entregable
 !models/*.pt
+# runs/ ya NO está ignorada por completo -- sus curvas de entrenamiento,
+# matriz de confusión y results.csv sí se comitean (ver runs/detect/train/).
+# Los .pt de runs/**/weights/ siguen ignorados por la regla *.pt de arriba
+# (best.pt es idéntico al ya comiteado en models/, no vale la pena duplicar
+# 22MB+22MB) -- ver runs/detect/train/weights/README.txt.
 
 # Salidas de hybrid_inference.py (JSONs, imágenes anotadas, curvas P-R):
 # todavía en fase de pruebas mientras se corren las 3 configuraciones finales
