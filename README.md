@@ -7,19 +7,19 @@ husky-detection/
 ├── README.md                    # setup, cómo correr, quién hace qué
 ├── CLAUDE.md                    # guía del repo para Claude Code (arquitectura, estado, decisiones)
 ├── Especificaciones de Tarea 4...pdf   # enunciado original de la tarea
-├── requirements.txt              # torch, torchvision, transformers, accelerate, ultralytics, pillow (`pip install -r requirements.txt`)
-├── .gitignore                   # __pycache__, *.pt, runs/, data/*_fixture/, dataset_fixture.yaml (excepto models/*.pt, sí se comitean)
+├── requirements.txt              # torch, torchvision, transformers, accelerate, ultralytics, pillow, matplotlib (`pip install -r requirements.txt`)
+├── .gitignore                   # __pycache__, *.pt, runs/, data/*_fixture/, dataset_fixture.yaml, results/{metrics,figures,graphs}/ (excepto models/*.pt, sí se comitean)
 ├── config.py                    # model_ids, prompts, thresholds, rutas, límites — todo lo configurable vive aquí
 ├── src/
 │   ├── utils.py                 # QwenVLM + parse_boxes + convert_to_yolo + YOLODetector
 │   ├── auto_labeling.py         # Fase 1: raw/ → labels_auto/ + labels_check/ (implementado)
 │   ├── split_dataset.py         # prepara train/test (70/30) + dataset.yaml, previo a Fase 2 (implementado)
 │   ├── train_yolo.py            # Fase 2: ajuste fino de YOLOv8s (implementado)
-│   ├── hybrid_inference.py      # Fases 3-4 (pendiente)
+│   ├── hybrid_inference.py      # Fases 3-4: YOLO + cascada Qwen (implementado)
 |   ├── rename_and_resize_images.py         # Renombra y redimensiona las imagenes de data/raw/ (implementado)
 │   ├── generate_fixture_dataset.py  # script de prueba descartable: genera dataset falso
 │   ├── test_box_order.py        # script de prueba descartable, no es parte del pipeline
-│   └── metrics.py               # mAP, FP/FN, latencia, curvas P-R (pendiente)
+│   └── metrics.py               # IoU, matching contra ground truth, mAP@0.5 (implementado, lo usa hybrid_inference.py)
 ├── dataset.yaml                 # generado por split_dataset.py (ya corrido con datos reales)
 ├── yolov8s.pt                   # pesos preentrenados, descargados por Ultralytics al entrenar (gitignored)
 ├── runs/                        # resultados de entrenamiento de Ultralytics, incl. runs/detect/train/weights/best.pt (gitignored)
@@ -33,9 +33,10 @@ husky-detection/
 │   ├── train/                   # 70 imágenes+labels (split real ya generado)
 │   ├── test/                    # 30 imágenes+labels (split real ya generado)
 │   └── validation/              # vacía por ahora (config.VALIDATION_DIR, aún sin usar en ningún script)
-├── results/
-│   ├── metrics/                 # un JSON por configuración
-│   └── figures/                 # curvas, matriz de confusión, ejemplos
+├── results/                      # metrics/figures/graphs gitignored por ahora (aún en pruebas, ver CLAUDE.md)
+│   ├── metrics/                 # un JSON por configuración (hybrid_inference.py)
+│   ├── figures/                 # imágenes anotadas por corrida (verde=TP/naranja=FP)
+│   └── graphs/                  # curva Precision-Recall por corrida (metrics.plot_precision_recall)
 └── report/
     └── reporte.pdf
 ```

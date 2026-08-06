@@ -235,3 +235,12 @@ dataset_fixture.yaml
 runs/
 # Excepción: modelos finales del equipo, sí se comitean como entregable
 !models/*.pt
+
+# Salidas de hybrid_inference.py (JSONs, imágenes anotadas, curvas P-R):
+# todavía en fase de pruebas mientras se corren las 3 configuraciones finales
+# (yolo_only, cascade+0.8b, cascade+2b) -- no se comitean hasta confirmar que
+# los números están bien. Los scripts recrean estas carpetas al vuelo
+# (mkdir con exist_ok=True), así que no hace falta un .gitkeep por subcarpeta.
+results/metrics/
+results/figures/
+results/graphs/

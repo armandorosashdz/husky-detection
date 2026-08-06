@@ -16,6 +16,7 @@ VALIDATION_DIR        = DATA / "validation"
 RESULTS   = ROOT / "results"
 METRICS_DIR = RESULTS / "metrics"
 FIGURES_DIR = RESULTS / "figures"
+GRAPHS_DIR  = RESULTS / "graphs"   # curvas Precision-Recall por corrida (metrics.py)
 MODELS_DIR  = RESULTS / "models"
 
 DATASET_YAML = ROOT / "dataset.yaml"
@@ -62,8 +63,34 @@ QWEN_LABELER = QWEN_MODELS["0.8b"]
 # QWEN_LABELER = QWEN_MODELS["4b"]
 # QWEN_LABELER = QWEN_MODELS["9b"]  # usar en Colab/GPU (junto con DEVICE="auto" abajo), no en esta laptop
 
-# Fase 4 (hybrid_inference.py): tamaños de validador a comparar en la cascada.
-QWEN_VALIDATORS = QWEN_MODELS
+# Fase 4 (hybrid_inference.py): qué tamaño usar como validador de la cascada.
+# La tarea pide correr y comparar los dos, así que cambiar aquí a mano entre
+# corridas de hybrid_inference.py (una por tamaño).
+QWEN_VALIDATOR = QWEN_MODELS["0.8b"]
+# QWEN_VALIDATOR = QWEN_MODELS["2b"]
+
+# Fase 3/4 (hybrid_inference.py): "yolo_only" corre solo el detector (línea
+# base); "cascade" además valida cada caja con QWEN_VALIDATOR. Cambiar aquí a
+# mano y volver a correr para cada una de las 3 configuraciones a comparar.
+#HYBRID_MODE = "cascade"
+HYBRID_MODE = "yolo_only"
+
+# Yes/No es una palabra -- no vale la pena esperar a que QwenVLM.ask() genere
+# hasta su default (512 tokens) en un loop de cientos de recortes.
+VALIDATION_MAX_NEW_TOKENS = 8
+
+# Nombre opcional para una corrida de hybrid_inference.py. Si no es None,
+# REEMPLAZA por completo el run_name auto-generado (yolo_only/cascade_08b/
+# cascade_2b) -- útil para nombrar la corrida con los modelos usados en vez
+# del nombre genérico, ej. "armando_yolov8s_qwen08b". No afecta qué modelo se
+# usa (eso lo deciden HYBRID_MODE/QWEN_VALIDATOR arriba) ni lo que se guarda
+# en el .json (mode/qwen_model se calculan aparte, no se leen del nombre) --
+# solo cambia cómo se llaman results/metrics/<esto>.json,
+# results/figures/<esto>/ y results/graphs/<esto>_pr_curve.png.
+# RUN_LABEL = None
+RUN_LABEL = "Yolov8s"
+#RUN_LABEL = "Yolov8s_Qwen0_8b"  # ejemplo de cómo nombrar la corrida con los modelos usados
+#RUN_LABEL = "Yolov8s_Qwen2_0b"  # ejemplo de cómo nombrar la corrida con los modelos usados
 
 # Fase 1 (auto_labeling.py): límite de imágenes de data/raw/ a procesar por corrida.
 # None = todas. Cambiar aquí a un entero para probar rápido con pocas imágenes.
@@ -169,6 +196,10 @@ AUGMENT = {
 CONF_THRESHOLD = 0.15    # bajo a propósito: más detecciones para que la cascada filtre
 IOU_THRESHOLD  = 0.45
 CROP_PADDING   = 10      # px extra alrededor de la caja antes de mandarla al VLM
+
+# Fase 4/5 (hybrid_inference.py + metrics.py)
+MAP_IOU_THRESHOLD  = 0.5   # IoU mínimo para considerar una detección TP vs. ground truth (mAP@0.5)
+DEDUP_IOU_THRESHOLD = 0.4  # IoU para descartar cajas redundantes tras la cascada (2da pasada tipo NMS)
 
 # ---------- Split ----------
 TRAIN_RATIO = 0.7        # 70 train / 30 test

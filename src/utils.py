@@ -55,11 +55,14 @@ class QwenVLM:
         )
         return self
 
-    def ask(self, image: Image.Image, prompt: str) -> str:
+    def ask(self, image: Image.Image, prompt: str, max_new_tokens: int = 512) -> str:
         """Corre el modelo sobre una imagen + prompt y regresa el texto crudo de salida.
 
         Genérico a propósito: no asume el formato de la respuesta, ya que el mismo
-        método sirve tanto para pedir boxes (Fase 1) como para pedir Yes/No (Fase 4).
+        método sirve tanto para pedir boxes (Fase 1, max_new_tokens por defecto)
+        como para pedir Yes/No (Fase 4, hybrid_inference.py pasa un valor mucho
+        más chico como 8 -- la respuesta es una palabra, no vale la pena esperar
+        a que genere hasta 512 tokens en un loop de cientos de recortes).
 
         Sigue el patrón de uso oficial de la tarjeta del modelo en Hugging Face
         (huggingface.co/Qwen/Qwen3.5-0.8B).
@@ -68,6 +71,9 @@ class QwenVLM:
         un bloque de razonamiento <think>...</think> antes de la respuesta final.
         No lo necesitamos para detección de cajas ni para el Yes/No de validación,
         y consumía max_new_tokens sin llegar a la respuesta real. Ver CLAUDE.md.
+
+        do_sample=False: greedy decoding, determinista -- para que la validación
+        Yes/No (y las métricas que dependen de ella) sean reproducibles.
         """
         if self.model is None or self.processor is None:
             raise RuntimeError("Modelo no cargado. Llama a load() antes de ask().")
@@ -92,7 +98,9 @@ class QwenVLM:
         ).to(self.model.device)
 
         with torch.no_grad():
-            output_ids = self.model.generate(**inputs, max_new_tokens=512)
+            output_ids = self.model.generate(
+                **inputs, max_new_tokens=max_new_tokens, do_sample=False
+            )
 
         response = self.processor.decode(
             output_ids[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True
