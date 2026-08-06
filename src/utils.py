@@ -12,6 +12,7 @@ Sección YOLOv8 (Fase 3/4: hybrid_inference.py):
 - YOLODetector: carga el detector ya entrenado + inferencia + recorte de detecciones.
 """
 
+import gc
 import json
 import re
 
@@ -21,6 +22,29 @@ from transformers import AutoModelForMultimodalLM, AutoProcessor
 from ultralytics import YOLO
 
 import config
+
+
+def liberar_memoria_cuda() -> None:
+    """Libera la memoria CUDA reservada por la última inferencia. Se llama
+    después de cada QwenVLM.ask() -- cada imagen trae una resolución
+    distinta, así que cada llamada reserva tensores de tamaño distinto
+    (input, KV-cache); sin liberar explícitamente, la memoria se fragmenta
+    con cada llamada nueva y en un loop de muchas imágenes (ej.
+    auto_labeling.py sobre las 100) termina en OutOfMemoryError aunque cada
+    llamada individual quepa de sobra.
+
+    torch.cuda.empty_cache() envuelto en try/except: si la GPU ya se quedó
+    sin memoria justo antes, hasta el propio empty_cache() puede fallar --
+    no queremos que eso tumbe el script a medio loop, un aviso basta.
+    gc.collect() adicional: libera referencias de Python a los tensores que
+    torch por sí solo no siempre alcanza a recolectar de inmediato, dejando
+    más memoria real disponible para empty_cache(). No afecta a CPU."""
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except RuntimeError as e:
+        print(f"   (aviso: no se pudo limpiar cache CUDA: {e})")
+    gc.collect()
 
 
 # ---------- Qwen (VLM) ----------
@@ -106,14 +130,8 @@ class QwenVLM:
             output_ids[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True
         )
 
-        # Cada imagen trae una resolución distinta -> cada llamada reserva tensores
-        # de tamaño distinto en CUDA (input, KV-cache). Sin liberar explícitamente,
-        # la memoria se fragmenta con cada llamada nueva y en un loop de muchas
-        # imágenes (ej. auto_labeling.py sobre las 100) termina en OutOfMemoryError
-        # aunque cada llamada individual quepa de sobra. No afecta a CPU.
         del inputs, output_ids
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        liberar_memoria_cuda()
 
         return response.strip()
 

@@ -46,8 +46,8 @@ LABELS_CHECK_OUT = config.LABELS_CHECK_DIR
 # TODO: si esto se vuelve permanente, mover VERIFY_BREED/VERIFY_PROMPT a
 # config.py, junto con PROMPT_LABELING/PROMPT_VALIDATION, para no romper la
 # convención de "toda la config vive en config.py".
-VERIFY_BREED = False
-# VERIFY_BREED = True
+#VERIFY_BREED = False
+VERIFY_BREED = True
 
 VERIFY_PROMPT = (
     "Look only at this cropped image. Is the dog shown specifically a "
