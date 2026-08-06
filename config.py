@@ -12,6 +12,16 @@ LABELS_CHECK_DIR= DATA / "labels_check"
 TRAIN_DIR       = DATA / "train"
 TEST_DIR        = DATA / "test"
 VALIDATION_DIR        = DATA / "validation"
+# 40 imágenes nunca vistas por el entrenamiento (ni siquiera como val de
+# Ultralytics durante train_yolo.py, a diferencia de TEST_DIR -- ver nota en
+# CLAUDE.md sobre contaminación del holdout). Mismo layout images/+labels/
+# que TEST_DIR, para que hybrid_inference.py pueda apuntar a cualquiera de
+# los dos sin cambiar cómo lee las rutas. LABELS_VALIDATION_DIR aún no tiene
+# contenido real -- se llena corriendo auto_labeling.py apuntado aquí (ver
+# su toggle INPUT_DIR/LABELS_AUTO_OUT/LABELS_CHECK_OUT).
+VALIDATION_IMAGES_DIR      = VALIDATION_DIR / "images"
+VALIDATION_LABELS_DIR      = VALIDATION_DIR / "labels"
+VALIDATION_LABELS_CHECK_DIR = VALIDATION_DIR / "labels_check"
 
 RESULTS   = ROOT / "results"
 METRICS_DIR = RESULTS / "metrics"

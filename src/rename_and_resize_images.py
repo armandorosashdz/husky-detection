@@ -1,12 +1,14 @@
 """
-Renombra las imágenes de data/raw/ al esquema husky_000.jpg ... husky_099.jpg
-y redimensiona las que excedan config.MAX_IMAGE_DIM en su lado más grande.
+Renombra las imágenes de TARGET_DIR (ver toggle abajo, default data/raw/) al
+esquema husky_000.jpg ... husky_NNN.jpg y redimensiona las que excedan
+config.MAX_IMAGE_DIM en su lado más grande.
 
 Uso:
     python src/rename_and_resize_images.py
 
-Correr ANTES de auto_labeling.py. Si ya generaste etiquetas, renombrar aquí
-rompe el emparejamiento imagen ↔ .txt.
+Correr ANTES de auto_labeling.py apuntado a la misma carpeta. Si ya generaste
+etiquetas para esa carpeta, renombrar aquí rompe el emparejamiento imagen ↔
+.txt (la parte de resize sola sí es segura de re-correr en cualquier momento).
 """
 
 from pathlib import Path
@@ -16,6 +18,16 @@ from PIL import Image
 
 sys.path.append(str(Path(__file__).parent.parent))
 import config
+
+# Carpeta sobre la que actúa: por defecto la real de Fase 1 (data/raw/). Para
+# aplicar el mismo renombrado+resize a las 40 imágenes de validación (antes de
+# generar sus pseudo-etiquetas con auto_labeling.py -- mismo orden que Fase 1:
+# esto primero, etiquetado después), comentar la línea de abajo y descomentar
+# la de validación. Igual que en auto_labeling.py, si ya generaste etiquetas
+# para esa carpeta, volver a renombrarla rompe el emparejamiento imagen ↔ .txt
+# (ver docstring arriba) -- la parte de resize sola sí es segura de re-correr.
+TARGET_DIR = config.RAW_DIR
+#TARGET_DIR = config.VALIDATION_IMAGES_DIR
 
 
 def redimensionar_si_necesario(path: Path, max_dim: int) -> bool:
@@ -33,7 +45,7 @@ def redimensionar_si_necesario(path: Path, max_dim: int) -> bool:
 
 
 def main():
-    carpeta = config.RAW_DIR
+    carpeta = TARGET_DIR
     if not carpeta.exists():
         sys.exit(f"No existe la carpeta {carpeta}")
 

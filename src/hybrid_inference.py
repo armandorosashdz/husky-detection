@@ -20,6 +20,12 @@ config.py:
     2) HYBRID_MODE = "cascade", QWEN_VALIDATOR = QWEN_MODELS["0.8b"]
     3) HYBRID_MODE = "cascade", QWEN_VALIDATOR = QWEN_MODELS["2b"]
 
+EVAL_DIR (variable de este archivo, no de config.py) elige qué carpeta
+evaluar: config.TEST_DIR (default, 30 imágenes -- usadas también como val
+durante el entrenamiento) o config.VALIDATION_DIR (40 imágenes que el
+entrenamiento nunca vio, un holdout más limpio -- requiere haber corrido antes
+auto_labeling.py apuntado a validación para generar sus pseudo-etiquetas).
+
 Uso:
     python src/hybrid_inference.py
 """
@@ -40,6 +46,16 @@ from utils import QwenVLM, YOLODetector
 # Se lee una sola vez de config.py; evita comparar el string "cascade" en
 # cinco lugares distintos del archivo.
 ES_CASCADA = config.HYBRID_MODE == "cascade"
+
+# Carpeta a evaluar: por defecto el test set real (data/test/), que Ultralytics
+# ya usó como val durante train_yolo.py para elegir el mejor checkpoint -- no
+# es un holdout 100% limpio (ver nota en CLAUDE.md). Para evaluar contra las
+# 40 imágenes de validación que el entrenamiento nunca vio, comentar la línea
+# de abajo y descomentar la de validación -- requiere haber generado antes sus
+# pseudo-etiquetas con auto_labeling.py (ver su propio toggle INPUT_DIR).
+# Se espera el mismo layout images/+labels/ en ambos casos.
+EVAL_DIR = config.TEST_DIR
+# EVAL_DIR = config.VALIDATION_DIR
 
 
 @dataclass
@@ -74,14 +90,14 @@ def nombre_corrida() -> tuple[str, str | None]:
     return run_name, validador_size
 
 
-def listar_imagenes_test() -> list[Path]:
-    images_dir = config.TEST_DIR / "images"
+def listar_imagenes_eval() -> list[Path]:
+    images_dir = EVAL_DIR / "images"
     image_paths = sorted(
         p for p in images_dir.iterdir()
         if p.is_file() and p.suffix.lower() in config.IMG_EXTENSIONS
     )
     if not image_paths:
-        sys.exit(f"No se encontraron imágenes en {images_dir}. Corre split_dataset.py primero.")
+        sys.exit(f"No se encontraron imágenes en {images_dir}. Corre split_dataset.py (si EVAL_DIR=TEST_DIR) o auto_labeling.py (si EVAL_DIR=VALIDATION_DIR) primero.")
     return image_paths
 
 
@@ -210,9 +226,9 @@ def main():
         print(f"Cargando validador: {config.QWEN_VALIDATOR}")
         validador = QwenVLM(config.QWEN_VALIDATOR).load()
 
-    image_paths = listar_imagenes_test()
-    labels_dir = config.TEST_DIR / "labels"
-    print(f"Evaluando '{run_name}' sobre {len(image_paths)} imagen(es) de test...")
+    image_paths = listar_imagenes_eval()
+    labels_dir = EVAL_DIR / "labels"
+    print(f"Evaluando '{run_name}' sobre {len(image_paths)} imagen(es) de {EVAL_DIR.name}...")
 
     # Warm-up: la primera inferencia siempre es más lenta (inicialización de
     # CUDA/cuDNN); no se cuenta en las métricas de latencia/FPS.
