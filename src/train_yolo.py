@@ -19,6 +19,7 @@ Uso:
     python src/train_yolo.py
 """
 
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -36,6 +37,12 @@ DATASET_YAML_PATH = config.DATASET_YAML
 
 
 def main():
+    # Ultralytics resuelve el "path: ." de dataset.yaml relativo al cwd del
+    # proceso, no a la carpeta del .yaml (ver nota en split_dataset.py) --
+    # sin esto, correr el script desde un IDE que cambia el cwd (ej. Spyder
+    # con --wdir apuntando a src/) rompe la resolución de rutas del dataset.
+    os.chdir(config.ROOT)
+
     if not DATASET_YAML_PATH.exists():
         sys.exit(
             f"No existe {DATASET_YAML_PATH}. Corre split_dataset.py primero "

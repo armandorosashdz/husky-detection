@@ -15,6 +15,7 @@ Uso:
     python src/split_dataset.py
 """
 
+import os
 import random
 import shutil
 import sys
@@ -84,13 +85,22 @@ def escribir_dataset_yaml(train_dir: Path, test_dir: Path, yaml_path: Path) -> N
     """Escribe un dataset.yaml en el formato que espera Ultralytics: path raíz +
     rutas relativas a las imágenes de train/val + el diccionario de clases.
 
-    "path" se escribe como "." (relativo al propio archivo .yaml, que Ultralytics
-    resuelve respecto a la carpeta donde vive el .yaml) en vez de una ruta absoluta.
-    Antes se escribía config.ROOT.as_posix(), una ruta absoluta de la máquina que
-    corrió split_dataset.py (ej. "c:/Users/Armando/...") -- funcionaba localmente
-    pero al comitear ese dataset.yaml y clonar en otra máquina (Kaggle, Linux) esa
-    ruta no existe y el entrenamiento no encontraba las imágenes. Asume que
-    yaml_path vive en config.ROOT (cierto para DATASET_YAML y DATASET_YAML_FIXTURE).
+    "path" se escribe como "." en vez de una ruta absoluta. Antes se escribía
+    config.ROOT.as_posix(), una ruta absoluta de la máquina que corrió
+    split_dataset.py (ej. "c:/Users/Armando/...") -- funcionaba localmente
+    pero al comitear ese dataset.yaml y clonar en otra máquina (Kaggle, Linux)
+    esa ruta no existe y el entrenamiento no encontraba las imágenes.
+
+    IMPORTANTE: Ultralytics NO resuelve "." relativo a la carpeta donde vive
+    el .yaml (a pesar de lo que decía un comentario previo aquí) -- lo
+    resuelve relativo al cwd del proceso en el momento de la llamada (ver
+    check_det_dataset() en ultralytics/data/utils.py: `Path(".").resolve()`
+    usa el directorio de trabajo actual). Por eso main() de este script (y
+    de train_yolo.py) hace os.chdir(config.ROOT) antes de tocar Ultralytics
+    -- si no, correr el script desde un IDE que cambia el cwd (ej. Spyder
+    con --wdir apuntando a src/) rompe la resolución de rutas aunque
+    dataset.yaml esté bien escrito. Asume que yaml_path vive en config.ROOT
+    (cierto para DATASET_YAML y DATASET_YAML_FIXTURE).
     """
     train_rel = (train_dir / "images").relative_to(config.ROOT).as_posix()
     test_rel = (test_dir / "images").relative_to(config.ROOT).as_posix()
@@ -119,6 +129,10 @@ def verificar_dataset_yaml(yaml_path: Path) -> None:
 
 
 def main():
+    # Ultralytics resuelve el "path: ." de dataset.yaml relativo al cwd del
+    # proceso, no a la carpeta del .yaml -- ver nota en escribir_dataset_yaml().
+    os.chdir(config.ROOT)
+
     print(f"Buscando pares imagen+label en {SOURCE_IMAGES_DIR} / {SOURCE_LABELS_DIR}...")
     pares = listar_pares(SOURCE_IMAGES_DIR, SOURCE_LABELS_DIR)
     if not pares:
