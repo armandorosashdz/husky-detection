@@ -230,6 +230,18 @@ data/train_fixture/
 data/test_fixture/
 dataset_fixture.yaml
 
-# Pesos de YOLO (preentrenados, descargados por Ultralytics) y resultados de entrenamiento
+# Pesos de YOLO (preentrenados, descargados por Ultralytics)
 *.pt
-runs/
+# Excepción: modelos finales del equipo, sí se comitean como entregable
+!models/*.pt
+# runs/ ya NO está ignorada por completo -- sus curvas de entrenamiento,
+# matriz de confusión y results.csv sí se comitean (ver runs/detect/train/).
+# Los .pt de runs/**/weights/ siguen ignorados por la regla *.pt de arriba
+# (best.pt es idéntico al ya comiteado en models/, no vale la pena duplicar
+# 22MB+22MB) -- ver runs/detect/train/weights/README.txt.
+
+# results/metrics|figures|graphs/ (salidas de hybrid_inference.py) ya NO
+# están ignoradas -- las 6 corridas (yolo_only/cascade_08b/cascade_2b, sobre
+# data/test/ y data/validation/) ya se corrieron y confirmaron, se comitean
+# como entregable. Los scripts recrean estas carpetas al vuelo (mkdir con
+# exist_ok=True) si se vuelven a correr.

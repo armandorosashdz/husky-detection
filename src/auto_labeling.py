@@ -18,6 +18,20 @@ sys.path.append(str(Path(__file__).parent.parent))
 import config
 from utils import QwenVLM, convert_to_yolo, parse_boxes
 
+# Rutas de entrada/salida: por defecto las reales de Fase 1 (data/raw/ ->
+# labels_auto/ + labels_check/). Para generar pseudo-ground-truth sobre las
+# 40 imágenes de validación (data/validation/images/ -> data/validation/labels/
+# + labels_check/, un holdout que el entrenamiento nunca vio -- ver nota en
+# CLAUDE.md), comentar el bloque de abajo y descomentar el de validación. No
+# toca las rutas reales de Fase 1 en ningún caso.
+#INPUT_DIR = config.RAW_DIR
+#LABELS_AUTO_OUT = config.LABELS_AUTO_DIR
+#LABELS_CHECK_OUT = config.LABELS_CHECK_DIR
+
+INPUT_DIR = config.VALIDATION_IMAGES_DIR
+LABELS_AUTO_OUT = config.VALIDATION_LABELS_DIR
+LABELS_CHECK_OUT = config.VALIDATION_LABELS_CHECK_DIR
+
 
 def es_imagen(path: Path) -> bool:
     return path.is_file() and path.suffix.lower() in config.IMG_EXTENSIONS
@@ -25,7 +39,7 @@ def es_imagen(path: Path) -> bool:
 
 def listar_imagenes() -> list[Path]:
     imagenes = []
-    for p in config.RAW_DIR.iterdir():
+    for p in INPUT_DIR.iterdir():
         if es_imagen(p):
             imagenes.append(p)
     return sorted(imagenes)
@@ -51,11 +65,11 @@ def procesar_imagen(vlm: QwenVLM, imagen_path: Path) -> int:
     cajas = parse_boxes(respuesta)
 
     lineas_yolo = [convert_to_yolo(caja) for caja in cajas]
-    txt_path = config.LABELS_AUTO_DIR / f"{imagen_path.stem}.txt"
+    txt_path = LABELS_AUTO_OUT / f"{imagen_path.stem}.txt"
     txt_path.write_text("\n".join(lineas_yolo) + ("\n" if lineas_yolo else ""))
 
     visualizacion = dibujar_cajas(image, cajas)
-    visualizacion.save(config.LABELS_CHECK_DIR / imagen_path.name)
+    visualizacion.save(LABELS_CHECK_OUT / imagen_path.name)
 
     return len(cajas)
 
@@ -63,13 +77,13 @@ def procesar_imagen(vlm: QwenVLM, imagen_path: Path) -> int:
 def main():
     imagenes = listar_imagenes()
     if not imagenes:
-        sys.exit(f"No se encontraron imágenes en {config.RAW_DIR}")
+        sys.exit(f"No se encontraron imágenes en {INPUT_DIR}")
 
     if config.AUTO_LABELING_LIMIT is not None:
         imagenes = imagenes[:config.AUTO_LABELING_LIMIT]
 
-    config.LABELS_AUTO_DIR.mkdir(parents=True, exist_ok=True)
-    config.LABELS_CHECK_DIR.mkdir(parents=True, exist_ok=True)
+    LABELS_AUTO_OUT.mkdir(parents=True, exist_ok=True)
+    LABELS_CHECK_OUT.mkdir(parents=True, exist_ok=True)
 
     print(f"Cargando modelo {config.QWEN_LABELER} en {config.DEVICE} (puede tardar)...")
     
