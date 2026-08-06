@@ -7,7 +7,13 @@ Instrucciones para alguien que solo tiene las imágenes sin anotar en `data/raw/
 ```bash
 pip install -r requirements.txt
 ```
-(en una máquina sin GPU dedicada, correr en su lugar con `conda run -n tarea3 python src/<script>.py` o el entorno conda equivalente; en Kaggle/Colab basta con instalar `requirements.txt` y ajustar `config.DEVICE`/`DTYPE` a `"cuda"`/`"float16"` antes de correr).
+(en una máquina sin GPU dedicada, correr en su lugar con `conda run -n tarea3 python src/<script>.py` o el entorno conda equivalente).
+
+**En Kaggle específicamente, `pip install -r requirements.txt` no basta**: Kaggle ya trae `transformers`/`accelerate`/`ultralytics` preinstalados pero desactualizados — como esos paquetes ya están instalados, `pip install` normal los deja tal cual (no los actualiza) y `transformers` termina siendo muy viejo para reconocer la arquitectura `qwen3_5` de Qwen3.5 (`KeyError: 'qwen3_5'`). Hace falta forzar la actualización explícitamente:
+```bash
+!pip install -U transformers accelerate ultralytics -q
+```
+y reiniciar el kernel del notebook después (Kaggle no recarga los paquetes actualizados en la sesión activa). También ajustar `config.DEVICE`/`DTYPE` a `"cuda"`/`"float16"` antes de correr para aprovechar la GPU.
 
 **1. Renombrar y redimensionar las imágenes crudas**
 ```bash
