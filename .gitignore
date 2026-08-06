@@ -240,11 +240,8 @@ dataset_fixture.yaml
 # (best.pt es idéntico al ya comiteado en models/, no vale la pena duplicar
 # 22MB+22MB) -- ver runs/detect/train/weights/README.txt.
 
-# Salidas de hybrid_inference.py (JSONs, imágenes anotadas, curvas P-R):
-# todavía en fase de pruebas mientras se corren las 3 configuraciones finales
-# (yolo_only, cascade+0.8b, cascade+2b) -- no se comitean hasta confirmar que
-# los números están bien. Los scripts recrean estas carpetas al vuelo
-# (mkdir con exist_ok=True), así que no hace falta un .gitkeep por subcarpeta.
-results/metrics/
-results/figures/
-results/graphs/
+# results/metrics|figures|graphs/ (salidas de hybrid_inference.py) ya NO
+# están ignoradas -- las 6 corridas (yolo_only/cascade_08b/cascade_2b, sobre
+# data/test/ y data/validation/) ya se corrieron y confirmaron, se comitean
+# como entregable. Los scripts recrean estas carpetas al vuelo (mkdir con
+# exist_ok=True) si se vuelven a correr.
