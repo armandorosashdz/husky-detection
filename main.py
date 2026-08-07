@@ -143,7 +143,7 @@ def correr_hybrid_inference() -> None:
         for i, cfg in enumerate(CONFIGURACIONES_HYBRID, start=1):
             encabezado(f"hybrid_inference.py [{i}/{len(CONFIGURACIONES_HYBRID)}] -- {cfg.nombre}")
 
-            variables_config = {"HYBRID_MODE": f'"{cfg.hybrid_mode}"', "RUN_LABEL": "None"}
+            variables_config = {"HYBRID_MODE": f'"{cfg.hybrid_mode}"', "RUN_LABEL": f'"{cfg.nombre}"'}
             if cfg.qwen_validador is not None:
                 variables_config["QWEN_VALIDATOR"] = f'QWEN_MODELS["{cfg.qwen_validador}"]'
 
