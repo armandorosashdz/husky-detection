@@ -53,9 +53,9 @@ class ConfigHybrid:
 # Configuraciones de hybrid_inference.py a correr. Comentar/descomentar
 # líneas para elegir cuáles -- la tarea pide las 3.
 CONFIGURACIONES_HYBRID = [
-    ConfigHybrid("yolo_only", "yolo_only", None),
-    # ConfigHybrid("cascade_08b", "cascade", "0.8b"),
-    # ConfigHybrid("cascade_2b", "cascade", "2b"),
+    ConfigHybrid("Yolov8s", "yolo_only", None),
+    ConfigHybrid("Yolov8s + Qwen0.8b", "cascade", "0.8b"),
+    ConfigHybrid("Yolov8s + Qwen2.0b", "cascade", "2b"),
 ]
 
 # Pasos por fuente. "validation" no entrena (data/validation/ es un holdout).
