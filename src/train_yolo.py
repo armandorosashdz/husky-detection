@@ -1,19 +1,9 @@
 """
-Fase 2: Transfer Learning (ajuste fino de YOLOv8s).
+Fase 2: ajuste fino de YOLOv8s sobre el dataset de DATASET_YAML_PATH, con
+los hiperparámetros de config.py.
 
-Carga YOLOv8s preentrenado (config.YOLO_BASE) y lo afina sobre el dataset definido
-en DATASET_YAML_PATH (train/val), usando los hiperparámetros centralizados en
-config.py (EPOCHS, IMG_SIZE, BATCH, PATIENCE, SEED, OPTIMIZER, LR0, FREEZE, AUGMENT).
-
-Nota de diseño (ver CLAUDE.md, "Fase 2 design decision"): se usa nc=1 (solo
-"husky"), lo que reinicializa la cabeza de detección y pierde las 80 clases de
-COCO originales. Fue una decisión deliberada, no un descuido — investigamos la
-alternativa (ConcatHead, requiere parchear ultralytics) y no era viable con el
-tiempo/hardware disponibles.
-
-Sin argumentos de consola: qué dataset.yaml usar se define aquí abajo (por
-defecto el fixture, para probar sin arriesgar tiempo de cómputo real; cambiar al
-real ya verificado que el flujo funciona), igual que hicimos en split_dataset.py.
+Usa nc=1 (solo "husky"), lo que reinicializa la cabeza de detección y
+pierde las 80 clases de COCO -- decisión deliberada.
 
 Uso:
     python src/train_yolo.py
@@ -29,19 +19,12 @@ from ultralytics import YOLO
 sys.path.append(str(Path(__file__).parent.parent))
 import config
 
-# ---------- Parámetros (editar aquí a mano) ----------
 #DATASET_YAML_PATH = config.DATASET_YAML_FIXTURE
-
-# Dataset real, para cuando ya se haya probado con el fixture:
 DATASET_YAML_PATH = config.DATASET_YAML
 
 
 def main():
-    # Ultralytics resuelve el "path: ." de dataset.yaml relativo al cwd del
-    # proceso, no a la carpeta del .yaml (ver nota en split_dataset.py) --
-    # sin esto, correr el script desde un IDE que cambia el cwd (ej. Spyder
-    # con --wdir apuntando a src/) rompe la resolución de rutas del dataset.
-    os.chdir(config.ROOT)
+    os.chdir(config.ROOT)  # ver nota en split_dataset.py
 
     if not DATASET_YAML_PATH.exists():
         sys.exit(
@@ -70,9 +53,7 @@ def main():
         **config.AUGMENT,
     )
 
-    # Ultralytics deja el resultado en YOLO_RUNS_DIR/YOLO_RUN_NAME/weights/best.pt
-    # (carpeta regenerable, gitignored). Lo copiamos al modelo "activo" del
-    # pipeline en models/, que sí se comitea.
+    # Copia el mejor checkpoint al modelo "activo" del pipeline (models/, se comitea).
     pesos_entrenados = config.YOLO_RUNS_DIR / config.YOLO_RUN_NAME / "weights" / "best.pt"
     config.YOLO_TRAINED.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(pesos_entrenados, config.YOLO_TRAINED)

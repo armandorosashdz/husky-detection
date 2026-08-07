@@ -1,14 +1,13 @@
 """
-Renombra las imágenes de TARGET_DIR (ver toggle abajo, default data/raw/) al
-esquema husky_000.jpg ... husky_NNN.jpg y redimensiona las que excedan
-config.MAX_IMAGE_DIM en su lado más grande.
+Renombra las imágenes de TARGET_DIR al esquema husky_000.jpg... y
+redimensiona las que excedan config.MAX_IMAGE_DIM.
+
+Correr ANTES de auto_labeling.py apuntado a la misma carpeta -- renombrar
+después de etiquetar rompe el emparejamiento imagen ↔ .txt (el resize solo
+sí es seguro de re-correr en cualquier momento).
 
 Uso:
     python src/rename_and_resize_images.py
-
-Correr ANTES de auto_labeling.py apuntado a la misma carpeta. Si ya generaste
-etiquetas para esa carpeta, renombrar aquí rompe el emparejamiento imagen ↔
-.txt (la parte de resize sola sí es segura de re-correr en cualquier momento).
 """
 
 from pathlib import Path
@@ -19,13 +18,8 @@ from PIL import Image
 sys.path.append(str(Path(__file__).parent.parent))
 import config
 
-# Carpeta sobre la que actúa: por defecto la real de Fase 1 (data/raw/). Para
-# aplicar el mismo renombrado+resize a las 40 imágenes de validación (antes de
-# generar sus pseudo-etiquetas con auto_labeling.py -- mismo orden que Fase 1:
-# esto primero, etiquetado después), comentar la línea de abajo y descomentar
-# la de validación. Igual que en auto_labeling.py, si ya generaste etiquetas
-# para esa carpeta, volver a renombrarla rompe el emparejamiento imagen ↔ .txt
-# (ver docstring arriba) -- la parte de resize sola sí es segura de re-correr.
+# Por defecto data/raw/. Para procesar data/validation/ en vez, comentar
+# esta línea y descomentar la de abajo.
 TARGET_DIR = config.RAW_DIR
 #TARGET_DIR = config.VALIDATION_IMAGES_DIR
 
@@ -57,8 +51,7 @@ def main():
 
     print(f"{len(imagenes)} imágenes encontradas en {carpeta}\n")
 
-    # Paso 1: a nombres temporales, para evitar colisiones si algún archivo
-    # ya se llama como uno de los destinos (ej. husky_005.jpg existente).
+    # Nombres temporales primero, para evitar colisiones con los destinos.
     temporales = []
     for i, p in enumerate(imagenes, start=0):
         destino = carpeta / f"{config.IMG_PREFIX}_{i:03d}{p.suffix.lower()}"

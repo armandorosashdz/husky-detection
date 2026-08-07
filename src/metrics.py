@@ -1,10 +1,5 @@
-"""
-Fase 5: utilidades de métricas (IoU, matching contra ground truth, mAP@0.5).
-
-Funciones puras, sin estado — las usa hybrid_inference.py para calcular las
-métricas de cada corrida (YOLOv8s solo, +validador 0.8B, +validador 2B) y
-armar la tabla comparativa + curvas Precision-Recall del reporte.
-"""
+"""Fase 5: IoU, matching contra ground truth, mAP@0.5. Funciones puras que
+usa hybrid_inference.py para las métricas de cada corrida."""
 
 from pathlib import Path
 
@@ -33,14 +28,8 @@ def iou(box_a: list[float], box_b: list[float]) -> float:
 
 
 def load_ground_truth(label_path: Path, img_w: int, img_h: int) -> list[list[float]]:
-    """Lee un .txt en formato YOLO (class_id x_center y_center width height,
-    normalizado 0-1) y regresa las cajas en píxeles [x1, y1, x2, y2].
-
-    Es el inverso de utils.convert_to_yolo, pero partiendo de formato YOLO
-    normalizado (no de la escala 0-1000 nativa de Qwen) — por eso vive en
-    metrics.py y no en utils.py, es específico de evaluación contra ground
-    truth, no del pipeline de etiquetado/detección en sí.
-    """
+    """Lee un .txt YOLO (class_id x_center y_center width height, 0-1) y
+    regresa las cajas en píxeles [x1, y1, x2, y2]. Inverso de convert_to_yolo."""
     if not label_path.exists():
         return []
 
@@ -63,10 +52,8 @@ def match_detections(
     gt_boxes: list[list[float]],
     iou_threshold: float = config.MAP_IOU_THRESHOLD,
 ) -> list[dict]:
-    """Empareja detecciones (de UNA imagen) contra su ground truth: greedy,
-    ordenado por confianza descendente, cada caja de ground truth solo se
-    puede emparejar una vez. Agrega la clave "is_tp" (True/False) a cada dict
-    de detección y regresa la misma lista (mutada in-place, mismos dicts)."""
+    """Empareja detecciones de una imagen contra su ground truth: greedy por
+    confianza, cada GT se usa una sola vez. Agrega "is_tp" a cada detección."""
     ordenadas = sorted(detecciones, key=lambda d: d["conf"], reverse=True)
     gt_matched = [False] * len(gt_boxes)
 
@@ -86,55 +73,12 @@ def match_detections(
     return ordenadas
 
 
-# Versión anterior (VOC/COCO clásico, interpolación por todos los puntos +
-# integración trapezoidal manual). Funcionaba bien (mAP@0.5=0.9557 en el test
-# real de 30 imágenes) — se deja comentada como referencia mientras se prueba
-# la versión de abajo basada en ultralytics.utils.metrics.compute_ap.
-#
-# def compute_ap(
-#     detections: list[dict], n_gt_total: int
-# ) -> tuple[float, list[float], list[float]]:
-#     """AP@0.5 estilo VOC/COCO sobre las detecciones de TODAS las imágenes ya
-#     emparejadas (con "is_tp" de match_detections): ordena por confianza
-#     descendente, acumula TP/FP y calcula el área bajo la curva
-#     precision-recall (interpolación por todos los puntos)."""
-#     detections = sorted(detections, key=lambda d: d["conf"], reverse=True)
-#     tp_cum, fp_cum = 0, 0
-#     precisions, recalls = [], []
-#
-#     for d in detections:
-#         if d["is_tp"]:
-#             tp_cum += 1
-#         else:
-#             fp_cum += 1
-#         precisions.append(tp_cum / (tp_cum + fp_cum))
-#         recalls.append(tp_cum / n_gt_total if n_gt_total > 0 else 0)
-#
-#     if not precisions:
-#         return 0.0, [], []
-#
-#     # Interpolación: precisión máxima hacia la derecha en cada punto de recall.
-#     for i in range(len(precisions) - 2, -1, -1):
-#         precisions[i] = max(precisions[i], precisions[i + 1])
-#
-#     # Integración trapezoidal simple sobre (recall, precisión interpolada).
-#     ap = 0.0
-#     prev_recall = 0.0
-#     for p, r in zip(precisions, recalls):
-#         ap += p * (r - prev_recall)
-#         prev_recall = r
-#
-#     return ap, precisions, recalls
-
-
 def compute_ap(
     detections: list[dict], n_gt_total: int
 ) -> tuple[float, list[float], list[float]]:
-    """AP@0.5 sobre las detecciones de TODAS las imágenes ya emparejadas (con
-    "is_tp" de match_detections): acumula TP/FP ordenando por confianza
-    descendente para armar las curvas crudas de precision/recall, y delega el
-    cálculo del área (interpolación de 101 puntos estilo COCO) a
-    ultralytics.utils.metrics.compute_ap en vez de una integración manual."""
+    """AP@0.5 sobre las detecciones de todas las imágenes (pooled, ya con
+    "is_tp"): acumula TP/FP por confianza descendente y delega el área
+    (interpolación de 101 puntos estilo COCO) a ultralytics.utils.metrics."""
     detections = sorted(detections, key=lambda d: d["conf"], reverse=True)
     tp_cum, fp_cum = 0, 0
     precisions, recalls = [], []
@@ -157,8 +101,7 @@ def compute_ap(
 def plot_precision_recall(
     precisions: list[float], recalls: list[float], run_name: str, ap: float
 ) -> Path:
-    """Grafica la curva Precision-Recall de una corrida y la guarda en
-    config.GRAPHS_DIR/<run_name>_pr_curve.png. Devuelve la ruta guardada."""
+    """Guarda la curva Precision-Recall en config.GRAPHS_DIR/<run_name>_pr_curve.png."""
     config.GRAPHS_DIR.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(6, 5))

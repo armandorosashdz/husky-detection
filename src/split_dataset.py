@@ -1,15 +1,10 @@
 """
-Prepara el dataset para entrenamiento: toma pares imagen+label de una carpeta
-fuente, los divide en train/test (aleatorio, reproducible) y los copia a la
-estructura images/+labels/ que espera Ultralytics, generando también el
-dataset.yaml correspondiente.
+Prepara el dataset para entrenamiento: toma pares imagen+label, los divide
+en train/test (aleatorio, reproducible), los copia a la estructura
+images/+labels/ que espera Ultralytics, y genera dataset.yaml.
 
-Paso previo a train_yolo.py (Fase 2), separado a propósito — ver CLAUDE.md.
-
-Sin argumentos de consola: las rutas fuente/destino y el ratio de split se
-configuran aquí abajo a mano (por defecto apuntan a las carpetas fixture, para
-probar sin tocar los datos reales; cambiar a las rutas reales comentadas cuando
-ya se haya verificado que todo funciona).
+Paso previo a train_yolo.py. Rutas fuente/destino y ratio de split se
+configuran aquí abajo.
 
 Uso:
     python src/split_dataset.py
@@ -24,14 +19,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 import config
 
-# ---------- Parámetros (editar aquí a mano) ----------
 #SOURCE_IMAGES_DIR = config.RAW_FIXTURE_DIR
 #SOURCE_LABELS_DIR = config.LABELS_AUTO_FIXTURE_DIR
 #DEST_TRAIN_DIR = config.TRAIN_FIXTURE_DIR
 #DEST_TEST_DIR = config.TEST_FIXTURE_DIR
 #DEST_YAML_PATH = config.DATASET_YAML_FIXTURE
 
-# Rutas reales, para cuando ya se haya probado con el fixture:
 SOURCE_IMAGES_DIR = config.RAW_DIR
 SOURCE_LABELS_DIR = config.LABELS_AUTO_DIR
 DEST_TRAIN_DIR = config.TRAIN_DIR
@@ -82,25 +75,13 @@ def copiar_pares(pares: list[tuple[Path, Path]], dest_dir: Path) -> None:
 
 
 def escribir_dataset_yaml(train_dir: Path, test_dir: Path, yaml_path: Path) -> None:
-    """Escribe un dataset.yaml en el formato que espera Ultralytics: path raíz +
-    rutas relativas a las imágenes de train/val + el diccionario de clases.
+    """Escribe dataset.yaml en el formato de Ultralytics: path raíz + rutas
+    relativas a train/val + clases.
 
-    "path" se escribe como "." en vez de una ruta absoluta. Antes se escribía
-    config.ROOT.as_posix(), una ruta absoluta de la máquina que corrió
-    split_dataset.py (ej. "c:/Users/Armando/...") -- funcionaba localmente
-    pero al comitear ese dataset.yaml y clonar en otra máquina (Kaggle, Linux)
-    esa ruta no existe y el entrenamiento no encontraba las imágenes.
-
-    IMPORTANTE: Ultralytics NO resuelve "." relativo a la carpeta donde vive
-    el .yaml (a pesar de lo que decía un comentario previo aquí) -- lo
-    resuelve relativo al cwd del proceso en el momento de la llamada (ver
-    check_det_dataset() en ultralytics/data/utils.py: `Path(".").resolve()`
-    usa el directorio de trabajo actual). Por eso main() de este script (y
-    de train_yolo.py) hace os.chdir(config.ROOT) antes de tocar Ultralytics
-    -- si no, correr el script desde un IDE que cambia el cwd (ej. Spyder
-    con --wdir apuntando a src/) rompe la resolución de rutas aunque
-    dataset.yaml esté bien escrito. Asume que yaml_path vive en config.ROOT
-    (cierto para DATASET_YAML y DATASET_YAML_FIXTURE).
+    "path" se escribe como "." (no absoluta, para que funcione igual al
+    clonar en otra máquina). Ultralytics la resuelve relativa al cwd del
+    proceso, no a la carpeta del .yaml -- por eso main() hace
+    os.chdir(config.ROOT) antes de llamar a Ultralytics.
     """
     train_rel = (train_dir / "images").relative_to(config.ROOT).as_posix()
     test_rel = (test_dir / "images").relative_to(config.ROOT).as_posix()
@@ -129,9 +110,7 @@ def verificar_dataset_yaml(yaml_path: Path) -> None:
 
 
 def main():
-    # Ultralytics resuelve el "path: ." de dataset.yaml relativo al cwd del
-    # proceso, no a la carpeta del .yaml -- ver nota en escribir_dataset_yaml().
-    os.chdir(config.ROOT)
+    os.chdir(config.ROOT)  # ver nota en escribir_dataset_yaml()
 
     print(f"Buscando pares imagen+label en {SOURCE_IMAGES_DIR} / {SOURCE_LABELS_DIR}...")
     pares = listar_pares(SOURCE_IMAGES_DIR, SOURCE_LABELS_DIR)

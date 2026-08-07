@@ -1,13 +1,7 @@
 """
-Grafica varias curvas Precision-Recall en la misma figura, una por cada
-JSON de resultados listado en RUN_JSONS (results/metrics/<archivo>.json,
-generados por hybrid_inference.py). Agregar o quitar nombres de esa lista
-agrega o quita líneas de la gráfica automáticamente -- si hay 2 nombres
-grafica 2 líneas, si hay 5 grafica 5, sin tocar el resto del script.
-
-No es parte del pipeline (hybrid_inference.py no lo llama) -- es una
-utilidad de reporte que se corre a mano cuando ya se tienen las corridas
-que se quieren comparar en una sola gráfica.
+Grafica varias curvas Precision-Recall en una sola figura, una por cada
+JSON en RUN_JSONS (results/metrics/<archivo>.json). Utilidad de reporte,
+no la llama hybrid_inference.py.
 
 Uso:
     python src/compare_pr_curves.py
@@ -22,23 +16,16 @@ import matplotlib.pyplot as plt
 sys.path.append(str(Path(__file__).parent.parent))
 import config
 
-# Qué corridas comparar: nombres de archivo dentro de results/metrics/ (con
-# o sin ".json"). Sin límite de cantidad -- agregar/quitar líneas aquí es
-# lo único que hay que tocar para cambiar cuántas curvas salen.
+# Archivos a comparar (con o sin ".json"). Agregar/quitar líneas aquí cambia
+# cuántas curvas salen, sin tocar el resto del script.
 #RUN_JSONS = [
 #    "Yolov8s.json",
 #    "Yolov8s + Qwen 0.8B.json",
 #    "Yolov8s + Qwen 2.0B.json",
 #]
 #OUTPUT_NAME = "comparacion_pr_test"
-
-# Diferenciador que se agrega al título de la gráfica: "Precision-Recall
-# mAP@0.5 -- <esto>". Sirve para dejar claro, sin abrir el archivo, a qué
-# corresponde la comparación (qué holdout, qué corte, etc.).
 #DIFERENCIADOR = "Imágenes de test"
 
-# Alternativa: las mismas 3 configuraciones pero sobre el holdout de
-# validación (data/validation/, ver CLAUDE.md).
 RUN_JSONS = [
     "Yolov8s val.json",
     "Yolov8s + Qwen 0.8B val.json",
@@ -47,10 +34,8 @@ RUN_JSONS = [
 OUTPUT_NAME = "comparacion_pr_validacion"
 DIFERENCIADOR = "Imágenes de validación"
 
-# Paleta fija (Okabe-Ito, segura para daltonismo). Los colores se asignan en
-# este orden según la posición en RUN_JSONS -- nunca por ciclo aleatorio, así
-# la misma corrida mantiene el mismo color si se reordena o compara en otra
-# gráfica con las mismas primeras entradas.
+# Paleta fija (Okabe-Ito, segura para daltonismo), asignada por posición en
+# RUN_JSONS -- no por ciclo, para que el color de una corrida no cambie.
 PALETA = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#F0E442", "#56B4E9"]
 
 
