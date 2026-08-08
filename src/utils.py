@@ -108,7 +108,15 @@ def parse_boxes(response: str) -> list[list[float]]:
     try:
         data = json.loads(match.group(0))
     except json.JSONDecodeError:
-        return []
+        # el arreglo se cortó a la mitad (max_new_tokens alcanzado con muchas
+        # cajas) -- rescata los objetos {"bbox_2d": [...]} que sí quedaron
+        # completos en vez de perder la imagen entera.
+        data = []
+        for obj_match in re.finditer(r'\{[^{}]*"bbox_2d"\s*:\s*\[[^\]]*\][^{}]*\}', response):
+            try:
+                data.append(json.loads(obj_match.group(0)))
+            except json.JSONDecodeError:
+                continue
 
     if len(data) == 4 and all(isinstance(v, (int, float)) for v in data):
         data = [data]

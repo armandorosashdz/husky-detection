@@ -72,7 +72,7 @@ def verify_is_husky(vlm: QwenVLM, crop_image: Image.Image) -> bool:
     if crop_image.width < 10 or crop_image.height < 10:
         return False
     try:
-        respuesta = vlm.ask(crop_image, config.PROMPT_VERIFY_BREED)
+        respuesta = vlm.ask(crop_image, config.PROMPT_VERIFY_BREED, max_new_tokens=8)
     except Exception as e:
         print(f"   ! error en verificación, se descarta la caja por seguridad: {e}")
         return False

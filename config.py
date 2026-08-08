@@ -184,7 +184,7 @@ YOLO_TRAINED = MODELS_ROOT / YOLO_TRAINED_NAME
 EPOCHS   = 100
 IMG_SIZE = 640
 BATCH    = 8
-PATIENCE = 20
+PATIENCE = 40
 SEED     = 42   # también controla el split 70/30 de arriba
 
 # Con optimizer="auto" (default de Ultralytics), cls_loss explotó (3.5 -> 18 -> 36)
@@ -193,8 +193,13 @@ SEED     = 42   # también controla el split 70/30 de arriba
 # el optimizador explícito para que LR0 realmente se use (con "auto", Ultralytics
 # ignora el LR0 que le pases). FREEZE congela las primeras 10 capas (el backbone,
 # capas 0-9 del resumen del modelo) -- transfer learning más estable con pocos datos.
+# LR0 bajado de nuevo a la mitad (0.001 -> 0.0005): el colapso de cls_loss volvió
+# a ocurrir con un dataset distinto, así que se reduce aún más el riesgo. PATIENCE
+# subido de 20 a 40: si el colapso vuelve a pasar, el entrenamiento tiene más
+# margen para recuperarse antes de que EarlyStopping se quede con una época
+# temprana poco entrenada como "mejor" checkpoint.
 OPTIMIZER = "AdamW"
-LR0       = 0.001   # la mitad del que "auto" eligió (0.002) y explotó
+LR0       = 0.0005   # la mitad del valor anterior (0.001)
 FREEZE    = 10
 
 # Augmentación (bajo volumen de datos -> agresiva)
