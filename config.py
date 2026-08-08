@@ -230,8 +230,13 @@ HYBRID_MODE = "yolo_only"
 QWEN_VALIDATOR = QWEN_MODELS["0.8b"]
 # QWEN_VALIDATOR = QWEN_MODELS["2b"]
 
+# Mismo texto estricto que PROMPT_VERIFY_BREED (Fase 1) -- la versión corta
+# original ("Is this a husky dog...") no excluía otras razas ni lobos y
+# dejaba pasar más falsos positivos de raza en la cascada.
 PROMPT_VALIDATION = (
-    "Is this a husky dog inside this image crop? Answer only Yes or No."
+    "Look only at this cropped image. Is the dog shown specifically a "
+    "Siberian Husky (not any other breed, and not a wolf)? "
+    "Answer with exactly one word: Yes or No."
 )
 
 # Yes/No es una palabra -- no vale la pena esperar a que QwenVLM.ask() genere
@@ -239,7 +244,10 @@ PROMPT_VALIDATION = (
 VALIDATION_MAX_NEW_TOKENS = 8
 
 # Inferencia YOLO
-CONF_THRESHOLD = 0.15   # bajo a propósito: más detecciones para que la cascada filtre
+# Bajado de 0.15 a 0.01: con 0.15 el recall tenía un techo duro de ~0.70 (un
+# ~30% de los huskies del ground truth nunca llegaban a esa confianza),
+# aunque el modelo entrenado sí era capaz de mAP@0.5=0.937 según Ultralytics.
+CONF_THRESHOLD = 0.01   # bajo a propósito: más detecciones para que la cascada filtre
 IOU_THRESHOLD  = 0.45
 CROP_PADDING   = 10     # px extra alrededor de la caja antes de mandarla al VLM
 
