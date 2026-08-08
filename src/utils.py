@@ -50,7 +50,7 @@ class QwenVLM:
         )
         return self
 
-    def ask(self, image: Image.Image, prompt: str, max_new_tokens: int = 512) -> str:
+    def ask(self, image: Image.Image, prompt: str, max_new_tokens: int = 768) -> str:
         """Corre el modelo sobre una imagen + prompt y regresa el texto de salida.
 
         enable_thinking=False: evita que Qwen3.5 (4B/9B) gaste max_new_tokens
