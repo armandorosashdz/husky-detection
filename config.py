@@ -63,7 +63,7 @@ IMG_PREFIX     = CLASS_NAME   # rename_and_resize_images.py: husky_000.jpg, husk
 # esto (en su lado más grande, manteniendo aspecto, nunca agranda). Algunas
 # imágenes de data/raw/ son enormes y hacían que Qwen intentara reservar
 # >10GB de golpe en una sola llamada de atención.
-MAX_IMAGE_DIM = 896
+MAX_IMAGE_DIM = 1280
 
 
 # ============================================================
