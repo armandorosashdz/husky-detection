@@ -65,7 +65,6 @@ IMG_PREFIX     = CLASS_NAME   # rename_and_resize_images.py: husky_000.jpg, husk
 # >10GB de golpe en una sola llamada de atención.
 MAX_IMAGE_DIM = 1280
 
-
 # ============================================================
 # MODELOS QWEN -- tamaños disponibles (compartido entre fases)
 # ============================================================
@@ -184,7 +183,7 @@ YOLO_TRAINED = MODELS_ROOT / YOLO_TRAINED_NAME
 EPOCHS   = 100
 IMG_SIZE = 640
 BATCH    = 8
-PATIENCE = 40
+PATIENCE = 60
 SEED     = 42   # también controla el split 70/30 de arriba
 
 # Con optimizer="auto" (default de Ultralytics), cls_loss explotó (3.5 -> 18 -> 36)
@@ -199,7 +198,7 @@ SEED     = 42   # también controla el split 70/30 de arriba
 # margen para recuperarse antes de que EarlyStopping se quede con una época
 # temprana poco entrenada como "mejor" checkpoint.
 OPTIMIZER = "AdamW"
-LR0       = 0.0005   # la mitad del valor anterior (0.001)
+LR0       = 0.0005   
 FREEZE    = 10
 
 # Augmentación (bajo volumen de datos -> agresiva)
@@ -280,5 +279,5 @@ DEDUP_IOU_THRESHOLD = 0.4   # IoU para descartar cajas redundantes tras la casca
 # DEVICE = "auto"
 DEVICE = "cuda"
 # DTYPE = "float32"
-DTYPE = "float16"
-# DTYPE = "bfloat16"
+#DTYPE = "float16"
+DTYPE = "bfloat16"
