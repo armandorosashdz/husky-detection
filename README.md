@@ -1,5 +1,15 @@
 # Detección de Huskies Siberianos: auto-etiquetado con VLM y transfer learning
 
+### Ejecución en Kaggle
+
+Si el proyecto se ejecuta en Kaggle, algunas dependencias pueden encontrarse preinstaladas en versiones desactualizadas. Antes de iniciar el pipeline, se recomienda actualizar los paquetes principales:
+
+bash
+!pip install -U transformers accelerate ultralytics -q
+
+
+Una vez finalizada la instalación, es necesario reiniciar la sesión de Kaggle para cargar correctamente las versiones actualizadas.
+
 ## 1. Introducción
 
 Este repositorio implementa un pipeline autónomo de detección de objetos especializado en la raza Husky Siberiano. El sistema combina tres componentes principales: un modelo de lenguaje visual (Qwen3.5 VL) empleado para generar automáticamente las anotaciones de entrenamiento a partir de imágenes sin etiquetar, un detector YOLOv8s ajustado mediante transfer learning sobre esas anotaciones, y una etapa de validación en cascada en la que el mismo modelo de lenguaje visual confirma o descarta cada detección del YOLOv8s antes de reportarla como definitiva.
