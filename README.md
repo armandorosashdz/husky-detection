@@ -83,6 +83,9 @@ Esta centralización tiene dos propósitos. Primero, evita que un mismo parámet
 | `HYBRID_MODE` | Alterna entre `"yolo_only"` (solo el detector) y `"cascade"` (detector + validación VLM), lo que permite generar las distintas configuraciones evaluadas sin modificar código. |
 | `YOLO_TRAINED_NAME` | Determina bajo qué nombre se guarda el modelo entrenado en `models/`, de forma que distintas corridas de entrenamiento no se sobrescriban entre sí. |
 | Hiperparámetros y umbrales | Los hiperparámetros de entrenamiento (`EPOCHS`, `OPTIMIZER`, `LR0`, `FREEZE`, `AUGMENT`, entre otros) y los umbrales de inferencia (`CONF_THRESHOLD`, `IOU_THRESHOLD`, `MAP_IOU_THRESHOLD`) se definen en un único bloque por fase, documentado con el criterio empleado para cada valor. |
+| `DEVICE` y `DTYPE` | Determinan el dispositivo (`"cuda"`, `"cpu"` o `"auto"`) y la cuantización (`"float32"`, `"float16"` o `"bfloat16"`) con la que se cargan los modelos de Qwen en Fase 1 y Fase 4. |
+
+> **Nota:** antes de ejecutar el pipeline en una máquina distinta a la usada para los resultados de este repositorio, se recomienda revisar y ajustar `DEVICE`/`DTYPE` según el hardware disponible (GPU NVIDIA, CPU, u otra combinación cómputo/VRAM), ya que un valor incompatible con el equipo puede impedir la carga de los modelos o degradar significativamente el rendimiento.
 
 ---
 
