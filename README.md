@@ -38,7 +38,11 @@ husky-detection/
 │   ├── train_yolo.py               # Fase 2: ajuste fino de YOLOv8s
 │   ├── hybrid_inference.py         # Fases 3-4: detección + cascada
 │   ├── metrics.py                  # Fase 5: IoU, mAP@0.5, curva P-R
-│   └── compare_pr_curves.py        # Compara curvas P-R en una figura
+│   ├── compare_pr_curves.py        # Compara curvas P-R en una figura
+│   ├── generate_fixture_dataset.py # Auxiliar, no forma parte del
+│   │                                # pipeline (Sección 6.8)
+│   └── test_box_order.py           # Auxiliar, no forma parte del
+│                                    # pipeline (Sección 6.8)
 ├── data/
 │   ├── raw/          # Imágenes originales, sin anotar
 │   ├── labels_auto/  # Anotaciones YOLO generadas por el VLM
@@ -119,6 +123,10 @@ Ejecuta el detector YOLOv8s entrenado sobre el conjunto de evaluación y, si `co
 python src/compare_pr_curves.py
 ```
 Combina las curvas Precision-Recall de las corridas indicadas en `results/metrics/` sobre una misma figura, empleada para comparar las configuraciones evaluadas.
+
+**6.8 Scripts auxiliares (no forman parte del pipeline)**
+
+`src/generate_fixture_dataset.py` y `src/test_box_order.py` no son invocados por `main.py` ni por ninguno de los módulos anteriores. El primero genera un dataset sintético de prueba, empleado para validar el funcionamiento de `split_dataset.py` sin arriesgar los datos reales. El segundo es una utilidad de verificación que confirma el orden de las coordenadas devueltas por el VLM y el resultado de `convert_to_yolo`, dibujando ambas interpretaciones sobre imágenes de muestra.
 
 ## 7. Resultados
 
