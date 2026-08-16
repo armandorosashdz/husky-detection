@@ -8,19 +8,6 @@
 
 ---
 
-## Instalación de dependencias
-
-Antes de ejecutar el proyecto, se recomienda crear y activar un entorno virtual con Python 3.10. Desde la raíz del repositorio, las dependencias se instalan mediante `requirements.txt`:
-
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-Este archivo instala las bibliotecas requeridas para el procesamiento con PyTorch, el uso de los modelos Qwen y YOLOv8s, y la generación de métricas y visualizaciones.
-
----
-
 ## 1. Introducción
 
 Este repositorio implementa un pipeline autónomo de detección de objetos especializado en la raza Husky Siberiano. El sistema combina tres componentes principales: un modelo de lenguaje visual (Qwen3.5 VL) empleado para generar automáticamente las anotaciones de entrenamiento a partir de imágenes sin etiquetar, un detector YOLOv8s ajustado mediante transfer learning sobre esas anotaciones, y una etapa de validación en cascada en la que el mismo modelo de lenguaje visual confirma o descarta cada detección del YOLOv8s antes de reportarla como definitiva.
@@ -101,7 +88,10 @@ Esta centralización tiene dos propósitos. Primero, evita que un mismo parámet
 
 ## 5. Ejecución del pipeline completo
 
+Antes de ejecutar el proyecto, se recomienda crear y activar un entorno virtual con Python 3.10. Desde la raíz del repositorio, las dependencias se instalan mediante `requirements.txt`, que incluye las bibliotecas requeridas para el procesamiento con PyTorch, el uso de los modelos Qwen y YOLOv8s, y la generación de métricas y visualizaciones:
+
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 python main.py
 ```
