@@ -168,13 +168,23 @@ La incorporación de la validación en cascada reduce sustancialmente el número
 
 ### 7.3 Resultados visuales de detección
 
-A continuación se muestra el resultado de las tres configuraciones sobre una misma imagen del conjunto de prueba (verde: verdadero positivo, naranja: falso positivo):
+A continuación se muestra el resultado de las tres configuraciones sobre las mismas imágenes del conjunto de prueba (verde: verdadero positivo, naranja: falso positivo). Las cajas naranjas presentes en la columna de YOLOv8s solo corresponden a falsos positivos del detector; su ausencia en las columnas con cascada evidencia el efecto de la validación con el VLM sobre esas mismas detecciones.
 
 <table>
 <tr>
 <td align="center">YOLOv8s solo</td>
 <td align="center">+ Qwen 0.8B</td>
 <td align="center">+ Qwen 2.0B</td>
+</tr>
+<tr>
+<td><img src="results/figures/Yolov8s/husky_031.jpg" width="260"></td>
+<td><img src="results/figures/Yolov8s + Qwen0.8b/husky_031.jpg" width="260"></td>
+<td><img src="results/figures/Yolov8s + Qwen2.0b/husky_031.jpg" width="260"></td>
+</tr>
+<tr>
+<td><img src="results/figures/Yolov8s/husky_081.jpg" width="260"></td>
+<td><img src="results/figures/Yolov8s + Qwen0.8b/husky_081.jpg" width="260"></td>
+<td><img src="results/figures/Yolov8s + Qwen2.0b/husky_081.jpg" width="260"></td>
 </tr>
 <tr>
 <td><img src="results/figures/Yolov8s/husky_013.jpg" width="260"></td>
