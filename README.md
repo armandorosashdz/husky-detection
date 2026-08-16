@@ -1,6 +1,5 @@
 # Detección de Huskies Siberianos: auto-etiquetado con VLM y transfer learning
 
-Jesús Armando Rosas Hernández
 
 ## 1. Introducción
 
