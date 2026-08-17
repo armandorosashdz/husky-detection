@@ -1,5 +1,5 @@
 {
-  "weights": "/home/jose-camarillo/Desktop/Cinvestav/III/Vision II/Pipeline deteccion autonoma con VLM y transfer learning /husky-detection/models/yolov8_finetuned_armando.pt",
+  "weights": "models/yolov8_finetuned_armando.pt",
   "images_count": 30,
   "candidates": 87,
   "generation_wall_s": 2.0676230550016044,
