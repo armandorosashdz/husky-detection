@@ -1,14 +1,4 @@
 <div align="center">
-### Ejecución en Kaggle
-
-Si el proyecto se ejecuta en Kaggle, algunas dependencias pueden encontrarse preinstaladas en versiones desactualizadas. Antes de iniciar el pipeline, se recomienda actualizar los paquetes principales:
-
-```bash
-!pip install -U transformers accelerate ultralytics -q
-```
-
-Una vez finalizada la instalación, es necesario reiniciar la sesión de Kaggle para cargar correctamente las versiones actualizadas.
-
 
 # Detección de Huskies Siberianos
 
@@ -108,6 +98,14 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 python main.py
 ```
+
+Si el pipeline se ejecuta en Kaggle, algunas dependencias pueden encontrarse preinstaladas en versiones desactualizadas. Antes de iniciar el pipeline, se recomienda actualizar los paquetes principales:
+
+```bash
+!pip install -U transformers accelerate ultralytics -q
+```
+
+Una vez finalizada la instalación, es necesario reiniciar la sesión de Kaggle para cargar correctamente las versiones actualizadas.
 
 `main.py` ejecuta en orden el renombrado/redimensionado de imágenes, el auto-etiquetado (Fase 1), la partición del dataset, el ajuste fino de YOLOv8s (Fase 2) y, finalmente, la inferencia híbrida (Fases 3-4-5) una vez por cada configuración definida en `CONFIGURACIONES_HYBRID` —por defecto, las tres configuraciones evaluadas en este trabajo: YOLOv8s solo, YOLOv8s con validación en cascada de Qwen 0.8B, y YOLOv8s con validación en cascada de Qwen 2.0B—. Para cada configuración, `main.py` ajusta automáticamente `HYBRID_MODE`/`QWEN_VALIDATOR`/`RUN_LABEL` en `config.py`, ejecuta `hybrid_inference.py` y restaura el archivo a su estado original al finalizar.
 
