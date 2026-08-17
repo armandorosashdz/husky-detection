@@ -1,4 +1,14 @@
 <div align="center">
+### Ejecución en Kaggle
+
+Si el proyecto se ejecuta en Kaggle, algunas dependencias pueden encontrarse preinstaladas en versiones desactualizadas. Antes de iniciar el pipeline, se recomienda actualizar los paquetes principales:
+
+```bash
+!pip install -U transformers accelerate ultralytics -q
+```
+
+Una vez finalizada la instalación, es necesario reiniciar la sesión de Kaggle para cargar correctamente las versiones actualizadas.
+
 
 # Detección de Huskies Siberianos
 
