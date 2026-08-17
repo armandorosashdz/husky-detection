@@ -87,7 +87,7 @@ def escribir_dataset_yaml(train_dir: Path, test_dir: Path, yaml_path: Path) -> N
     "path" se escribe como "." (relativo al propio archivo .yaml, que Ultralytics
     resuelve respecto a la carpeta donde vive el .yaml) en vez de una ruta absoluta.
     Antes se escribía config.ROOT.as_posix(), una ruta absoluta de la máquina que
-    corrió split_dataset.py (ej. "c:/Users/Armando/...") -- funcionaba localmente
+    corrió split_dataset.py (ej. "c:/Users/<usuario>/...") -- funcionaba localmente
     pero al comitear ese dataset.yaml y clonar en otra máquina (Kaggle, Linux) esa
     ruta no existe y el entrenamiento no encontraba las imágenes. Asume que
     yaml_path vive en config.ROOT (cierto para DATASET_YAML y DATASET_YAML_FIXTURE).
