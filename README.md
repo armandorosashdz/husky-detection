@@ -4,6 +4,8 @@
 
 ### Auto-etiquetado con VLM y *transfer learning*
 
+**Idioma:** Español | [English](README.en.md)
+
 </div>
 
 ---
